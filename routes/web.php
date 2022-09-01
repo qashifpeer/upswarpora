@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\FrontendController;
+use App\Http\Controllers\MarksController;
 use App\Http\Controllers\StudentController;
 use Illuminate\Support\Facades\Route;
 
@@ -24,11 +26,17 @@ Route::get('/dashboard', function () {
 
 require __DIR__.'/auth.php';
 
-Route::get('/add-student',[StudentController::class,'show']);
-Route::post('/added-student',[StudentController::class,'store']);
 
-Route::get('/search-student',[StudentController::class,'searchStd']);
-Route::get('/searched-student',[StudentController::class,'searched_student']);
 
-Route::get('/view-bonafide/{student}',[StudentController::class,'bonafide'])->name('bonafide');
+Route::get('/search-student',[FrontendController::class,'searchStd']);
+Route::get('/searched-student',[FrontendController::class,'searched_student']);
+Route::get('/view-bonafide/{student}',[FrontendController::class,'bonafide'])->name('bonafide');
+Route::get('/view-marksSheet/{student}',[FrontendController::class,'marksSheet'])->name('marksSheet');
 
+Route::get('/admin/add-student',[StudentController::class,'index']);
+Route::post('/admin/added-student',[StudentController::class,'store']);
+
+Route::get('/admin/add-marks/{student}',[MarksController::class,'index']);
+Route::post('/admin/added-marks',[MarksController::class,'store']);
+
+Route::get('/admin/view-student',[StudentController::class,'show']);

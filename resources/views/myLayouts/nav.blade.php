@@ -7,7 +7,7 @@
     </ul>
     <ul class="flex mx-8 space-x-6 text-sm md:text-lg">
         <li><a href="{{ route('login') }}">Login</a> </li>
-        <li><a href="{{  route('register')  }}">Register</a> </li>
+        {{-- <li><a href="{{  route('register')  }}">Register</a> </li> --}}
     </ul>
 </nav>
 <!-- Nav Ends -->

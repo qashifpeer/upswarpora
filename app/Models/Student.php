@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\MarkSheet;
 
 class Student extends Model
 {
@@ -17,4 +18,9 @@ class Student extends Model
         'class',
 
     ];
+
+    public function marksSheet()
+    {
+        return $this->hasOne(MarkSheet::class, 'enr_number','enr_number');
+    }
 }

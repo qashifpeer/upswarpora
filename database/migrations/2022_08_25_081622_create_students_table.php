@@ -16,12 +16,14 @@ return new class extends Migration
         Schema::create('students', function (Blueprint $table) {
             $table->id();
             $table->string('adm_number');
-            $table->string('enr_number');
+            $table->unsignedBigInteger('enr_number')->index()->unique();
             $table->string('name');
             $table->string('father_name');
             $table->string('mother_name');
             $table->string('dob');
             $table->string('class');
+
+
             $table->timestamps();
         });
     }

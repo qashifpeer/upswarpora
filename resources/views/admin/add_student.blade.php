@@ -4,7 +4,7 @@
 
 {{-- md:w-1/3 md:justify-center md:mx-auto  --}}
 <div class="border  border-gray-700 ">
-    <form action="{{ url('/added-student') }}" method="POST">
+    <form action="{{ url('/admin/added-student') }}" method="POST">
         @csrf
 
         <div class="mx-auto p-5 md:px-36 space-y-2">

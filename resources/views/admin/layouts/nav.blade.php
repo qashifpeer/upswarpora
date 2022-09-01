@@ -3,7 +3,9 @@
     <ul class="flex space-x-2 ml-2  text-xs ">
         <li><a href="{{ url('/dashboard') }}">Home</a> </li>
         <li> <a href="{{ url('search-student') }}">Search Student</a> </li>
-        <li><a href="{{ url('/add-student') }}">Add Student</a> </li>
+        <li><a href="{{ url('/admin/add-student') }}">Add Student</a> </li>
+        <li><a href="{{ url('/admin/search-student') }}">Add Marks</a> </li>
+        <li><a href="{{ url('/admin/view-student') }}">Show Students</a> </li>
     </ul>
     <ul class="flex  text-xs space-x-3 px-8 ">
         {{-- <li><a href="{{ route('login') }}">Login</a> </li> --}}

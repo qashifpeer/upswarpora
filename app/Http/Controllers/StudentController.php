@@ -22,7 +22,7 @@ class StudentController extends Controller
 
         $request->validate([
 
-            'enr_number'=> 'required',
+            'enr_number'=> 'required|unique:students',
             'adm_number'=> 'required',
             'name'=> 'required',
             'father_name'=> 'required',
@@ -46,7 +46,7 @@ class StudentController extends Controller
 
         $student->save();
 
-        return redirect()->back();
+        return redirect()->back()->with('error', 'Student Saved Successfully');
 
     }
     public function show(){

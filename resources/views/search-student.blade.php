@@ -9,17 +9,17 @@
                 class="bg-gray-50 border border-gray-300  text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 "
                 placeholder="En Number">
 
-                {{-- error handling --}}
-                <div class="ml-2">
-            @if (Session::has('error'))
-                <div class="text-red-700 text-sm" role="alert">
-                    {{ session::get('error') }}
-                </div>
-            @endif
-            @error('enr_number')
-                <div class="text-red-700 text-sm">{{ $message }}</div>
-            @enderror
-        </div>
+            {{-- error handling --}}
+            <div class="ml-2">
+                @if (Session::has('error'))
+                    <div class="text-red-700 text-sm" role="alert">
+                        {{ session::get('error') }}
+                    </div>
+                @endif
+                @error('enr_number')
+                    <div class="text-red-700 text-sm">{{ $message }}</div>
+                @enderror
+            </div>
 
 
             <div class="text-center mt-4">

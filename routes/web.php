@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\FrontendController;
 use App\Http\Controllers\MarksController;
+use App\Http\Controllers\MdmController;
 use App\Http\Controllers\StudentController;
 use Illuminate\Support\Facades\Route;
 
@@ -33,10 +34,17 @@ Route::get('/searched-student',[FrontendController::class,'searched_student']);
 Route::get('/view-bonafide/{student}',[FrontendController::class,'bonafide'])->name('bonafide');
 Route::get('/view-marksSheet/{student}',[FrontendController::class,'marksSheet'])->name('marksSheet');
 
-Route::get('/admin/add-student',[StudentController::class,'index']);
-Route::post('/admin/added-student',[StudentController::class,'store']);
+Route::get('/mdm',[MdmController::class,'index']);
+Route::post('mdm/submit',[MdmController::class,'calculate']);
 
-Route::get('/admin/add-marks/{student}',[MarksController::class,'index']);
-Route::post('/admin/added-marks',[MarksController::class,'store']);
+Route::get('/admin/add-student',[StudentController::class,'index'])->middleware('auth');
+Route::post('/admin/added-student',[StudentController::class,'store'])->middleware('auth');
 
-Route::get('/admin/view-student',[StudentController::class,'show']);
+Route::get('/admin/add-marks/{student}',[MarksController::class,'index'])->middleware('auth');
+Route::post('/admin/added-marks',[MarksController::class,'store'])->middleware('auth');
+
+Route::get('/admin/view-student',[StudentController::class,'show'])->middleware('auth');
+
+
+
+

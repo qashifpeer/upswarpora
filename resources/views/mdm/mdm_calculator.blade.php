@@ -8,7 +8,7 @@
 
                 <div class="pt-0 my-2 mx-8">
                     <p>Name Of The School</p>
-                    <input type="text" placeholder="School name" name="school" tabindex="1" class="px-3 py-1 placeholder-slate-300 text-slate-600 relative bg-white rounded text-sm border-1 shadow outline-none focus:outline-none focus:ring w-full"/>
+                    <input type="text" placeholder="School name" id="name" name="school" tabindex="1" class="px-3 py-1 placeholder-slate-300 text-slate-600 relative bg-white rounded text-sm border-1 shadow outline-none focus:outline-none focus:ring w-full"/>
                   </div>
                   <div class="flex space-x-6 my-2 mx-8">
                     <p>Select Month</p>

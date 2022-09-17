@@ -34,8 +34,9 @@ Route::get('/searched-student',[FrontendController::class,'searched_student']);
 Route::get('/view-bonafide/{student}',[FrontendController::class,'bonafide'])->name('bonafide');
 Route::get('/view-marksSheet/{student}',[FrontendController::class,'marksSheet'])->name('marksSheet');
 
-Route::get('/mdm',[MdmController::class,'index']);
-Route::post('mdm/submit',[MdmController::class,'calculate']);
+Route::get('/mdm-calculator',[MdmController::class,'index']);
+//  Route::post('mdm/submit',[MdmController::class,'calculate']);
+ Route::get('/mdm-display',[MdmController::class,'display']);
 
 Route::get('/admin/add-student',[StudentController::class,'index'])->middleware('auth');
 Route::post('/admin/added-student',[StudentController::class,'store'])->middleware('auth');

@@ -23,8 +23,8 @@
                             <th class="text-xs py-4 bg-slate-600 text-black">Date</th>
                             <th class="w-24 py-4 text-xs bg-slate-700 text-black">Primary Meals</th>
                             <th class="w-24 py-4 text-xs bg-slate-600 text-black">Middle meals</th>
-                            <th class="w-24 py-4 text-xs bg-slate-700 text-black">Rice Utilized</th>
-                            <th class="w-24 py-4 text-xs bg-slate-600 text-black">Expenditure</th>
+                            <th class="w-28 py-4 text-xs bg-slate-700 text-black">Rice Utilized</th>
+                            <th class="w-28 py-4 text-xs bg-slate-600 text-black">Expenditure</th>
                             <!-- <th class="text-xs border-r-2 border-gray-400 bg-slate-700 text-white">Expenditure Total</th> -->
                         </tr>
                     </thead>
@@ -678,6 +678,31 @@
                                 <input type="text" id="exp_d31" readonly
                                     class="form-control block w-full py-1 text-sm font-normal text-center text-gray-700 bg-white bg-clip-padding border border-solid border-gray-500 rounded transition ease-in-out m-0 focus:text-gray-700 focus:bg-white focus:border-blue-600 focus:outline-none" />
                             </td>
+                        </tr>
+                         <!-- ***** Total ******** -->
+                         <tr>
+                            <td class="text-xs font-semibold bg-blue-400 px-2 text-center">Total</td>
+                            <td>
+                                <input type="text" id="pr_total_meals" readonly
+                                    class="form-control block w-full py-1 text-sm text-center font-bold text-gray-700 bg-white bg-clip-padding border border-solid border-gray-500 rounded transition ease-in-out m-0 focus:text-gray-700 focus:bg-white focus:border-blue-600 focus:outline-none" />
+                            </td>
+                            <td>
+                                <input type="text" id="md_total_meals" readonly
+                                    class="form-control block w-full py-1 text-sm font-bold text-center text-gray-700 bg-white bg-clip-padding border border-solid border-gray-500 rounded transition ease-in-out m-0 focus:text-gray-700 focus:bg-white focus:border-blue-600 focus:outline-none" />
+                            </td>
+
+                            <td>
+                                <input type="text" id="total_rice_consumed" readonly
+                                    class="form-control block w-full py-1 px-0 text-sm text-center font-bold text-gray-700 bg-white bg-clip-padding border border-solid border-gray-500 rounded transition ease-in-out m-0 focus:text-gray-700 focus:bg-white focus:border-blue-600 focus:outline-none" />
+                            </td>
+                            <td>
+                                <input type="text" id="total_expenditure" readonly
+                                    class="form-control block w-full py-0 text-sm font-bold text-center text-gray-700 bg-white bg-clip-border border border-solid border-gray-500 rounded transition ease-in-out m-0 focus:text-gray-700 focus:bg-white focus:border-blue-600 focus:outline-none" />
+                            </td>
+
+
+
+
                         </tr>
                     </tbody>
                 </table>

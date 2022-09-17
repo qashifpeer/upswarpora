@@ -164,6 +164,8 @@ let exp_day31    = document.getElementById("exp_d31");
 
 
 
+
+
 // ********************************************
 // ****** DATA FETCH  *************
 // ********************************************
@@ -326,7 +328,14 @@ let meals_m31 = localStorage.getItem("meals_m31");
 let rice_d31  = localStorage.getItem("rice_d31");
 let exp_d31   = localStorage.getItem("exp_d31");
 
+// ***************Total Meals*****************
 
+document.getElementById("pr_total_meals").value = localStorage.getItem("pr_total_meals")
+document.getElementById("md_total_meals").value = localStorage.getItem("md_total_meals")
+document.getElementById("total_rice_consumed").value = localStorage.getItem("total_rice_consumed")
+
+//*******************Total Expenditure */
+document.getElementById("total_expenditure").value = localStorage.getItem("total_expenditure");
 
 //********************************************************** */
 //  ************ DATA INSERT *********************

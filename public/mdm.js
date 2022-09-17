@@ -131,6 +131,9 @@ const btn = document.getElementById("btn").addEventListener("click", () => {
                          +(meals_m24) + +(meals_m25) + +(meals_m26) + +(meals_m27) + +(meals_m28) + +(meals_m29) +
                          +(meals_m30) + +(meals_m31)
 
+        localStorage.setItem("pr_total_meals", pr_total_meals);
+        localStorage.setItem("md_total_meals", md_total_meals);
+
      // Rice Brought Forward ************
         let pr_rice_lb = document.getElementById("pr_rice_lb").value;
         let md_rice_lb = document.getElementById("md_rice_lb").value;
@@ -142,15 +145,20 @@ const btn = document.getElementById("btn").addEventListener("click", () => {
 
         let pr_rice_lifted = document.getElementById("pr_rice_lifted").value;
         let md_rice_lifted = document.getElementById("md_rice_lifted").value;
-        localStorage.setItem("pr_rice_lifted",pr_rice_lifted);
-        localStorage.setItem("md_rice_lifted",md_rice_lifted);
+
+        localStorage.setItem("pr_rice_lifted",pr_rice_lifted)
+        localStorage.setItem("md_rice_lifted",md_rice_lifted)
 
 
     //Total Rice Consumed
         let pr_rice_consumed = ((pr_total_meals * 100)/1000).toFixed(3)
-        let md_rice_consumed = ((pr_total_meals * 150)/1000).toFixed(3)
         localStorage.setItem("pr_rice_consumed", pr_rice_consumed)
+
+        let md_rice_consumed = ((pr_total_meals * 150)/1000).toFixed(3)
         localStorage.setItem("md_rice_consumed", md_rice_consumed)
+
+        let total_rice_consumed = (+(pr_rice_consumed) + +(md_rice_consumed)) + " kg"
+        localStorage.setItem("total_rice_consumed", total_rice_consumed)
 
     //RICE BALANCE
 
@@ -307,7 +315,8 @@ const btn = document.getElementById("btn").addEventListener("click", () => {
                     + (exp_md30) + (exp_md31)).toFixed(2)
 
 
-
+    total_expenditure = (+total_exp_pr) + +(total_exp_md) + " Rs"
+    localStorage.setItem("total_expenditure",total_expenditure)
 
     // **********************************************************
     //************* CALCULATE RICE CONSUMPTION **********
@@ -491,7 +500,7 @@ const btn = document.getElementById("btn").addEventListener("click", () => {
     localStorage.setItem("exp_d24", exp_d24);
 
     localStorage.setItem("meals_p25", meals_p25)
-    localStorage.setItem("meals_m25", meals_m14)
+    localStorage.setItem("meals_m25", meals_m25)
     localStorage.setItem("rice_d25", rice_d25);
     localStorage.setItem("exp_d25", exp_d25);
 

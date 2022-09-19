@@ -154,7 +154,7 @@ const btn = document.getElementById("btn").addEventListener("click", () => {
         let pr_rice_consumed = ((pr_total_meals * 100)/1000).toFixed(3)
         localStorage.setItem("pr_rice_consumed", pr_rice_consumed)
 
-        let md_rice_consumed = ((pr_total_meals * 150)/1000).toFixed(3)
+        let md_rice_consumed = ((md_total_meals * 150)/1000).toFixed(3)
         localStorage.setItem("md_rice_consumed", md_rice_consumed)
 
         let total_rice_consumed = (+(pr_rice_consumed) + +(md_rice_consumed)) + " kg"
@@ -297,23 +297,27 @@ const btn = document.getElementById("btn").addEventListener("click", () => {
     //************* CALCULATE EXPENDITURE TOTAL   **********
     //******************************************************** */
 
-    total_exp_pr =     ((exp_p1) + (exp_p2) + (exp_p3) + (exp_p4)
-                    + (exp_p5) + (exp_p6) + (exp_p7) + (exp_p8) + (exp_p9)
-                    + (exp_p10) + (exp_p11) + (exp_p12) + (exp_p13) + (exp_p14)
-                    + (exp_p15) + (exp_p16) + (exp_p17) + (exp_p18) + (exp_p19)
-                    + (exp_p20) + (exp_p21) + (exp_p22) + (exp_p23) + (exp_p24)
-                    + (exp_p25) + (exp_p26) + (exp_p27) + (exp_p28) + (exp_p29)
-                    + (exp_p30) + (exp_p31)).toFixed(2)
+    // total_exp_pr =     ((exp_p1) + (exp_p2) + (exp_p3) + (exp_p4)
+    //                 + (exp_p5) + (exp_p6) + (exp_p7) + (exp_p8) + (exp_p9)
+    //                 + (exp_p10) + (exp_p11) + (exp_p12) + (exp_p13) + (exp_p14)
+    //                 + (exp_p15) + (exp_p16) + (exp_p17) + (exp_p18) + (exp_p19)
+    //                 + (exp_p20) + (exp_p21) + (exp_p22) + (exp_p23) + (exp_p24)
+    //                 + (exp_p25) + (exp_p26) + (exp_p27) + (exp_p28) + (exp_p29)
+    //                 + (exp_p30) + (exp_p31)).toFixed(2)
 
 
-    total_exp_md =    ((exp_md1) + (exp_md2) + (exp_md3) + (exp_md4)
-                     + (exp_md5) + (exp_md6) + (exp_md7) + (exp_md8) + (exp_md9)
-                     + (exp_md10) + (exp_md11) + (exp_md12) + (exp_md13) + (exp_md14)
-                     + (exp_md15) + (exp_md16) + (exp_md17) + (exp_md18) + (exp_md19)
-                    + (exp_md20) + (exp_md21) + (exp_md22) + (exp_md23) + (exp_md24)
-                    + (exp_md25) + (exp_md26) + (exp_md27) + (exp_md28) + (exp_md29)
-                    + (exp_md30) + (exp_md31)).toFixed(2)
+    total_exp_pr = pr_total_meals * ratePrimary
 
+
+    // total_exp_md =    ((exp_md1) + (exp_md2) + (exp_md3) + (exp_md4)
+    //                  + (exp_md5) + (exp_md6) + (exp_md7) + (exp_md8) + (exp_md9)
+    //                  + (exp_md10) + (exp_md11) + (exp_md12) + (exp_md13) + (exp_md14)
+    //                  + (exp_md15) + (exp_md16) + (exp_md17) + (exp_md18) + (exp_md19)
+    //                 + (exp_md20) + (exp_md21) + (exp_md22) + (exp_md23) + (exp_md24)
+    //                 + (exp_md25) + (exp_md26) + (exp_md27) + (exp_md28) + (exp_md29)
+    //                 + (exp_md30) + (exp_md31)).toFixed(2)
+
+    total_exp_md  = md_total_meals * rateMiddle
 
     total_expenditure = (+total_exp_pr) + +(total_exp_md) + " Rs"
     localStorage.setItem("total_expenditure",total_expenditure)

@@ -5,7 +5,7 @@ let schoolName  = document.getElementById("school");
 let monthName   = document.getElementById("month");
 let yearName   = document.getElementById("year");
 
-let meals_pr_1  = document.getElementById("meals_p1");
+// let meals_pr_1  = document.getElementById("meals_p1");
 let meals_md_1  = document.getElementById("meals_m1");
 let rice_day1   = document.getElementById("rice_d1");
 let exp_day1    = document.getElementById("exp_d1");
@@ -173,7 +173,7 @@ let school  = localStorage.getItem("school");
 let month   = localStorage.getItem("month");
 let year   = localStorage.getItem("year");
 
-let meals_p1 = localStorage.getItem("meals_p1");
+ document.getElementById("meals_p1").value = localStorage.getItem("meals_p1");
 let meals_m1 = localStorage.getItem("meals_m1");
 let rice_d1  = localStorage.getItem("rice_d1");
 let exp_d1   = localStorage.getItem("exp_d1");
@@ -335,7 +335,7 @@ document.getElementById("md_total_meals").value = localStorage.getItem("md_total
 document.getElementById("total_rice_consumed").value = localStorage.getItem("total_rice_consumed")
 
 //*******************Total Expenditure */
-document.getElementById("total_expenditure").value = localStorage.getItem("total_expenditure");
+document.getElementById("total_expenditure").value = localStorage.getItem("total_expenditure")
 
 //********************************************************** */
 //  ************ DATA INSERT *********************
@@ -345,7 +345,7 @@ schoolName.innerText = school;
 monthName.innerText  = month;
 yearName.innerText  = year;
 
-meals_pr_1.value = meals_p1;
+// meals_pr_1.value = meals_p1;
 meals_md_1.value = meals_m1;
 rice_day1.value  = rice_d1;
 exp_day1.value   = exp_d1;
@@ -543,29 +543,30 @@ document.getElementById("md_balance").innerText = mdBalance;
 
 //closing Balance
 closingBal = (+(prBalance) + +(mdBalance)).toFixed(2)
- document.getElementById("closing_balance").innerText = closingBal
+ document.getElementById("closing_balance").innerText = closingBal + " Rs"
 
 
 // *********************************************
 //**********RICE DETAILS *****************
 //******************************************* */
 
-document.getElementById("pr_rice_lb").innerText = localStorage.getItem("pr_rice_lb");
-document.getElementById("md_rice_lb").innerText = localStorage.getItem("md_rice_lb");
+document.getElementById("pr_rice_lb").innerText = localStorage.getItem("pr_rice_lb") + " kg";
+document.getElementById("md_rice_lb").innerText = localStorage.getItem("md_rice_lb") + " kg";
 
-document.getElementById("pr_rice_lifted").innerText = localStorage.getItem("pr_rice_lifted");
-document.getElementById("md_rice_lifted").innerText = localStorage.getItem("md_rice_lifted");
+document.getElementById("pr_rice_lifted").innerText = localStorage.getItem("pr_rice_lifted") + " kg";
+document.getElementById("md_rice_lifted").innerText = localStorage.getItem("md_rice_lifted") + " kg";
 
-document.getElementById("pr_rice_consumed").innerText = localStorage.getItem("pr_rice_consumed");
-document.getElementById("md_rice_consumed").innerText = localStorage.getItem("md_rice_consumed");
+document.getElementById("pr_rice_consumed").innerText = localStorage.getItem("pr_rice_consumed") + " kg";
+document.getElementById("md_rice_consumed").innerText = localStorage.getItem("md_rice_consumed") + " kg";
 
-document.getElementById("pr_rice_balance").innerText = localStorage.getItem("pr_rice_balance");
-document.getElementById("md_rice_balance").innerText = localStorage.getItem("md_rice_balance");
+document.getElementById("pr_rice_balance").innerText = localStorage.getItem("pr_rice_balance") + " kg";
+document.getElementById("md_rice_balance").innerText = localStorage.getItem("md_rice_balance") + " kg";
 
 //closing Balance Rice
 pr_rice_balance = localStorage.getItem("pr_rice_balance");
 md_rice_balance = localStorage.getItem("md_rice_balance");
-document.getElementById("rice_closing_balance").innerText = (+(pr_rice_balance)  + +(md_rice_balance)).toFixed(3)
+rice_closing_balance = (+(pr_rice_balance)  + +(md_rice_balance)).toFixed(3)
+document.getElementById("rice_closing_balance").innerText = rice_closing_balance + " kg"
 
 
 

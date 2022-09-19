@@ -20,11 +20,11 @@
                 <table class="border-collapse border">
                     <thead>
                         <tr>
-                            <th class="text-xs py-4 bg-slate-600 text-black">Date</th>
-                            <th class="w-24 py-4 text-xs bg-slate-700 text-black">Primary Meals</th>
-                            <th class="w-24 py-4 text-xs bg-slate-600 text-black">Middle meals</th>
-                            <th class="w-28 py-4 text-xs bg-slate-700 text-black">Rice Utilized</th>
-                            <th class="w-28 py-4 text-xs bg-slate-600 text-black">Expenditure</th>
+                            <th class="text-xs py-4 bg-blue-700 text-white">Date</th>
+                            <th class="w-24 py-4 text-xs bg-blue-700 text-white">Primary Meals</th>
+                            <th class="w-24 py-4 text-xs bg-blue-700 text-white">Middle meals</th>
+                            <th class="w-28 py-4 text-xs bg-blue-700 text-white">Rice Utilized</th>
+                            <th class="w-28 py-4 text-xs bg-blue-700 text-white">Expenditure</th>
                             <!-- <th class="text-xs border-r-2 border-gray-400 bg-slate-700 text-white">Expenditure Total</th> -->
                         </tr>
                     </thead>
@@ -32,7 +32,7 @@
                         <!-- ***** DAY-1******** -->
                         <tr class="">
                             <td class="text-xs bg-blue-400 px-2">Day-1</td>
-                            <td>
+                            <td id="id="meals_p1">
                                 <input type="text" id="meals_p1" readonly
                                     class="form-control block w-full py-1 text-sm text-center font-normal text-gray-700 bg-white bg-clip-padding border border-solid border-gray-500 rounded transition ease-in-out m-0 focus:text-gray-700 focus:bg-white focus:border-blue-600 focus:outline-none" />
                             </td>
@@ -786,7 +786,7 @@
                              </tr>
                              {{-- Middle Component --}}
                              <tr class="border-2">
-                                 <th class="border-r-2 bg-indigo-800 text-white" colspan="2">Rice-Details (PRIMARY)</th>
+                                 <th class="border-r-2 bg-indigo-800 text-white" colspan="2">Rice-Details (Middle)</th>
                              </tr>
                              <tr>
                                  <td class="border-2 px-2" >Last Balance</td>

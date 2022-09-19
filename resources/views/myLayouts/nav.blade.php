@@ -3,7 +3,7 @@
     <ul class="flex space-x-4 pl-4 text-sm md:text-lg ">
         <li><a href="{{ url('/') }}">Home</a> </li>
         <li> <a href="{{ url('/search-student') }}">Search Student</a> </li>
-        <li> <a href="{{ url('/mdm') }}">MDM Calculator</a> </li>
+        <li> <a href="{{ url('/mdm-calculator') }}">MDM Calculator</a> </li>
 
     </ul>
     <ul class="flex mx-8 space-x-6 text-sm md:text-lg">

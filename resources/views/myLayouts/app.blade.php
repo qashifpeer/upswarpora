@@ -7,11 +7,14 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <title>Welcome To UPS Warpora</title>
 </head>
-<body>
+<body class="flex flex-col min-h-screen">
 
     @include('myLayouts.nav')
 
     @yield('main')
+
+    @include('myLayouts.footer')
+
 
 </body>
 </html>

@@ -28,7 +28,9 @@ Route::get('/dashboard', function () {
 require __DIR__.'/auth.php';
 
 
-
+route::get('/profile',function () {
+    return view('profile');
+});
 Route::get('/search-student',[FrontendController::class,'searchStd']);
 Route::get('/searched-student',[FrontendController::class,'searched_student']);
 Route::get('/view-bonafide/{student}',[FrontendController::class,'bonafide'])->name('bonafide');

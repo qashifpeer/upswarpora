@@ -1,0 +1,29 @@
+*{
+    padding: 0;
+    margin: 0;
+
+}
+.containerFull{
+    display: flex;
+    justify-content: space-between;
+    padding: 1rem 0;
+    background-color: #141414;
+    color: aliceblue;
+}
+.leftSide{
+    margin: 0 3rem;
+
+}
+.rightSide{
+    margin: 0 3rem;
+
+}
+
+ul{
+    display: flex;
+    
+}
+ul li{
+    padding: 0 1rem;
+    list-style: none;
+}

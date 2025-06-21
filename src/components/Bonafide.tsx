@@ -6,17 +6,13 @@ import { useReactToPrint } from "react-to-print";
 import { GoMail } from "react-icons/go";
 import { FaGlobe } from "react-icons/fa";
 
-type Student = {
+type StudentType = {
   name: string;
   fatherName: string;
-  enrNumber: string;
   dob: string;
-  session: {
-    title: string;
-  };
-  class: {
-    title: string;
-  };
+  enrNumber: string;
+  class: { title: string };
+  session: { title: string };
 };
 
 // Format Date to readable string
@@ -72,7 +68,8 @@ const Bonafide = () => {
   const contentRef = useRef<HTMLDivElement>(null);
   const reactToPrintFn = useReactToPrint({ contentRef });
 
-  const today = formatDate(new Date());
+  const today = formatDate(new Date().toISOString()); // if formatDate only accepts string
+
 
   return (
     <div className="min-h-screen bg-gray-50 py-10 px-4">
@@ -93,6 +90,7 @@ const Bonafide = () => {
             Search
           </button>
         </div>
+         {error && <p className="text-red-600 font-semibold">{error}</p>}
 
         {/* display area */}
         <div className="" ref={contentRef} style={{ width: "100%" }}>

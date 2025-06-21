@@ -36,7 +36,7 @@ export default function StudentInfo() {
     <div className="p-4 bg-white rounded shadow max-w-md">
       <h2 className="text-xl font-bold">Student Info</h2>
       <p><strong>Name:</strong> {student.name}</p>
-      <p><strong>Father's Name:</strong> {student.fatherName}</p>
+      <p><strong>Father&apos;s Name:</strong> {student.fatherName}</p>
       {/* <p><strong>Class:</strong> {student.class}</p> */}
     </div>
   )

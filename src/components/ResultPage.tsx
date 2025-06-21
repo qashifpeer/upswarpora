@@ -37,7 +37,7 @@ const ResultPage = () => {
   const [error, setError] = useState("");
 
   const contentRef = useRef<HTMLDivElement>(null);
-  const reactToPrintFn = useReactToPrint({ content: () => contentRef.current });
+  const reactToPrintFn = useReactToPrint({ contentRef });
 
   const fetchStudentData = async (rollNumber: string) => {
     setError("");
@@ -161,7 +161,8 @@ const ResultPage = () => {
                       <td className="border px-4 py-2 capitalize">{subject}</td>
                       <td className="border px-4 py-2">100</td>
                       <td className="border px-4 py-2">
-                        {(student.result as any)?.[subject]}
+                        {/* {(student.result as any)?.[subject]} */}
+                        {student.result?.[subject as keyof ResultType]}
                       </td>
                     </tr>
                   ))}

@@ -1,14 +1,15 @@
-// import { ResultPage } from '@/components'
+"use client";
+import React, { Suspense } from "react";
+
 import { ResultPage } from '@/components'
-import React from 'react'
 // app/result/page.tsx
 
 
 const Result = () => {
   return (
-    <div>
-        <ResultPage />
-    </div>
+   <Suspense fallback={<div className="text-center py-10">Loading...</div>}>
+      <ResultPage />
+    </Suspense>
   )
 }
 

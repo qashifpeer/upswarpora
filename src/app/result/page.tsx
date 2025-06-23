@@ -9,6 +9,7 @@ const Result = () => {
   return (
    <Suspense fallback={<div className="text-center py-10">Loading...</div>}>
       <ResultPage />
+      {/* <Result2024 /> */}
     </Suspense>
   )
 }

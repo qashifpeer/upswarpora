@@ -31,46 +31,49 @@ export default defineType({
       type: 'reference',
        to: [{ type: 'session' }],
     }),
-      defineField({
-      name: 'urdu',
-      title: 'Urdu',
-      type: 'number',
-    }),
-    defineField({
+     defineField({
       name: 'english',
       title: 'English',
       type: 'number',
     }),
-   
-    defineField({
+	defineField({
       name: 'math',
       title: 'Math',
       type: 'number',
     }),
-    defineField({
+	 defineField({
       name: 'science',
       title: 'Science',
       type: 'number',
     }),
-    defineField({
+	 defineField({
       name: 'sst',
       title: 'Social Science',
       type: 'number',
     }),
+
+      defineField({
+      name: 'urdu',
+      title: 'Urdu',
+      type: 'number',
+    }),  
+   
+   
     defineField({
       name: 'kashmiri',
       title: 'Kashmiri',
       type: 'number',
     }),
    
-    defineField({
-      name: 'maxMarks',
-      title: 'Max Marks',
-      type: 'number',
-    }),
+   
     defineField({
       name: 'marksObtained',
       title: 'Marks Obtained',
+      type: 'number',
+    }),
+	 defineField({
+      name: 'maxMarks',
+      title: 'Max Marks',
       type: 'number',
     }),
     defineField({
@@ -81,7 +84,8 @@ export default defineType({
     defineField({
       name: 'finalResult',
       title: 'Result',
-      type: 'number',
+      type: 'string',
+	  initialValue: 'pass',
     }),
 
     

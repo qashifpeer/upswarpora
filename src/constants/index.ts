@@ -5,12 +5,12 @@ export const links = [
         path: "/",
     },
     {
-        title: "Result",
-        path: "/result",
+        title: "Result2024",
+        path: "/result2024",
     },
     {
-        title: "Bonafide",
-        path: "/bonafide",
+        title: "Bonafide2025",
+        path: "/bonafide2025",
     },
     
 

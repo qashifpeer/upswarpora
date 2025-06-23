@@ -16,6 +16,8 @@ type ResultType = {
   marksObtained: number;
   percentage: number;
   maxMarks: number;
+ class: { title: string };
+  session: { title: string };
 };
 
 type StudentType = {
@@ -24,8 +26,7 @@ type StudentType = {
   dob: string;
   enrNumber: string;
   result: ResultType | null;
-  class: { title: string };
-  session: { title: string };
+  
 };
 
 const ResultPage = () => {
@@ -48,11 +49,11 @@ const ResultPage = () => {
         *[_type == "student" && enrNumber == $enrNumber][0]{
           name,
           fatherName,
-          class->{ title },
-          session->{ title },
           dob,
           enrNumber,
           "result": *[_type == "result2024" && student._ref == ^._id][0]{
+          class->{ title },
+          session->{ title },
             math,
             science,
             english,
@@ -89,6 +90,7 @@ const ResultPage = () => {
     }
   };
 
+
   return (
     <div className="min-h-screen bg-gray-50 py-10 px-4">
       <div className="max-w-3xl mx-auto space-y-4">
@@ -114,7 +116,19 @@ const ResultPage = () => {
         {/* Marksheet */}
         {student && (
           <div ref={contentRef}>
-            <div className="p-6 bg-white shadow-md rounded-lg border border-gray-200 mt-6">
+            <div className="p-6 bg-white shadow-md rounded-lg border border-gray-200 mt-6"
+             style={{
+              backgroundImage: `url("data:image/svg+xml,${encodeURIComponent(`
+                <svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'>
+                  <text x='0' y='150' transform='rotate(-45 100 100)' 
+                    fill='rgba(0,0,0,0.05)' font-size='28' font-family='Arial'>
+                    UPS WARPORA
+                  </text>
+                </svg>
+              `)}")`,
+              backgroundRepeat: "repeat",
+              backgroundPosition: "0 0",
+            }}>
               <div className="text-center mb-6">
                 <h1 className="text-2xl font-bold">
                   Govt Upper Primary School Warpora
@@ -130,13 +144,13 @@ const ResultPage = () => {
                   <strong>Parentage:</strong> {student.fatherName}
                 </p>
                 <p>
-                  <strong>Class:</strong> {student.class.title}
+                  <strong>Class:</strong> {student.result?.class.title}
                 </p>
                 <p>
                   <strong>Roll No:</strong> {student.enrNumber}
                 </p>
                 <p>
-                  <strong>Session:</strong> {student.session.title}
+                  <strong>Session:</strong> {student.result?.session.title}
                 </p>
               </div>
 
@@ -156,13 +170,16 @@ const ResultPage = () => {
                     "science",
                     "sst",
                     "kashmiri",
+                    
                   ].map((subject) => (
                     <tr key={subject}>
                       <td className="border px-4 py-2 capitalize">{subject}</td>
                       <td className="border px-4 py-2">100</td>
                       <td className="border px-4 py-2">
                         {/* {(student.result as any)?.[subject]} */}
-                        {student.result?.[subject as keyof ResultType]}
+                        {/* {student.result?.[subject as keyof ResultType]} */}
+                           {String(student.result?.[subject as keyof ResultType] ?? "")} {/* changed */}
+
                       </td>
                     </tr>
                   ))}

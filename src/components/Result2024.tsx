@@ -39,7 +39,7 @@ const Result2024 = () => {
 
   useEffect(() => {
     const fetchClasses = async () => {
-      const query = `*[_type == "presentClass"]{_id, title}`;
+     const query = `*[_type == "presentClass"] | order(classId desc){_id, title}`;
       const data: ClassType[] = await sanity.fetch(query);
       setClasses(data);
     };
@@ -54,12 +54,12 @@ const Result2024 = () => {
       setStudents([]);
 
       const query = `
-        *[_type == "student" && class._ref == $classId]{
+        *[_type == "student" && prevClass._ref == $classId]{
           name,
           enrNumber,
           pen,
-          class->{ title },
           "result": *[_type == "result2024" && student._ref == ^._id][0]{
+           class->{ title },
             math, english, science, urdu, sst, kashmiri,
             marksObtained, maxMarks, percentage, finalResult
           }

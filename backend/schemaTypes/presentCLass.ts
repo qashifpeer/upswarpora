@@ -10,6 +10,16 @@ export default defineType({
       title: 'Title',
       type: 'string',
     }),
+     defineField({
+      name: 'classId',
+      title: 'Class ID',
+      type: 'number',
+    }),
+    defineField({
+      name: 'prevClassId',
+      title: 'Previous Class Id',
+      type: 'number',
+    }),
     defineField({
       name: 'description',
       title: 'Description',

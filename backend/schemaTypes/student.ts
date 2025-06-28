@@ -43,6 +43,12 @@ export default defineType({
       to: { type: 'presentClass' },
     }),
     defineField({
+      name: 'prevClass',
+      title: 'Previous Class',
+      type: 'reference',
+      to: { type: 'presentClass' },
+    }),
+    defineField({
       name: 'admNumber',
       title: 'Admission Number',
       type: 'string',

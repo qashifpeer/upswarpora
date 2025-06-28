@@ -39,7 +39,7 @@ const Bonafide2025 = () => {
 
   useEffect(() => {
     const fetchClasses = async () => {
-      const query = `*[_type == "presentClass"]{_id, title}`;
+      const query = `*[_type == "presentClass"] | order(classId desc){_id, title}`;
       const data: ClassType[] = await sanity.fetch(query);
       setClasses(data);
     };
@@ -54,28 +54,20 @@ const Bonafide2025 = () => {
       setStudents([]);
 
       const query = `
-        *[_type == "student" && class._ref == $classId]{
-          name,
-          enrNumber,
-          dob,
-          class->{ title },
-          "result": *[_type == "result2024" && student._ref == ^._id][0]{
-            math, english, science, urdu, sst, kashmiri,
-            marksObtained, maxMarks, percentage, finalResult
-          }
-        } | order(enrNumber asc)
-      `;
+  *[_type == "student" && class._ref == $classId]{
+    name,
+    enrNumber,
+    dob,
+    class->{ title }
+  } | order(enrNumber asc)
+`;
 
       try {
         const data: StudentWithResult[] = await sanity.fetch(query, {
           classId: selectedClassId,
         });
 
-        const studentsWithResult = data.filter(
-          (stu): stu is StudentWithResult => !!stu.result
-        );
-
-        setStudents(studentsWithResult);
+        setStudents(data);
       } catch (error) {
         console.error("Error fetching students:", error);
       } finally {

@@ -1,8 +1,8 @@
-import blockContent from './blockContent'
-import student from './student'
-import session from './session'
-import subject from './subject'
-import presentCLass from './presentCLass'
-import result from './result'
+import { result2026 } from './result2026';
+import { masterData } from './masterData'
+import { staffMasterData} from './staffMasterData'
 
-export const schemaTypes = [student, session, subject, blockContent, presentCLass, result]
+export const schemaTypes = [masterData,
+      staffMasterData, 
+      result2026, 
+    ]

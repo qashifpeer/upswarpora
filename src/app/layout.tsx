@@ -1,23 +1,23 @@
-import type { Metadata } from "next";
-import "./globals.css";
-import { Navbar } from "@/components";
+import Navbar from '@/components/Navbar';
+import Footer from '@/components/home/Footer';
+import { isAuthenticated } from '@/lib/auth';
+import './globals.css';
 
-export const metadata: Metadata = {
-  title: "Upper Primary School Warpora Mawer",
-  description: "Welcome to UPS Warpora",
-};
-
-export default function RootLayout({
+export default async function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
-  return (
-    <html lang="en">
-      <body className={""}>
-        <Navbar />
+}) {
+  const authed = await isAuthenticated();
 
-        <main className="min-h-screen">{children}</main>
+  return (
+    <html lang="en" className="dark">
+      <body className="min-h-screen bg-slate-950 text-slate-100 antialiased">
+        <Navbar isAuthenticated={authed} />
+        <div className="flex min-h-screen flex-col lg:pl-64 print:pl-0">
+          <div className="flex-1">{children}</div>
+          <Footer />
+        </div>
       </body>
     </html>
   );

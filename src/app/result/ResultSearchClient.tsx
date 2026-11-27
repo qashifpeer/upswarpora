@@ -32,10 +32,22 @@ function isClassSixOrHigher(studentClass?: string): boolean {
   return !isNaN(numericClass) && numericClass >= 6;
 }
 
-export default function ResultSearchClient() {
+function getMarksheetSessionYear(currentSession?: string): string {
+  const match = currentSession?.match(/\d{4}/);
+  const baseYear = match ? parseInt(match[0], 10) : new Date().getFullYear();
+  return String(baseYear - 1);
+}
+
+export default function ResultSearchClient({
+  currentSession = '2026',
+}: {
+  currentSession?: string;
+}) {
   const searchParams = useSearchParams();
   const initialPenParam = searchParams.get('pen') || '';
   const initialDocParam = searchParams.get('doc') === 'bonafide' ? 'bonafide' : 'result';
+
+  const marksheetSession = getMarksheetSessionYear(currentSession);
 
   const [query, setQuery] = useState('');
   const [matches, setMatches] = useState<PublicStudentMatch[]>([]);
@@ -55,8 +67,8 @@ export default function ResultSearchClient() {
   const handlePrintMarksheet = useReactToPrint({
     contentRef: marksheetRef,
     documentTitle: selectedStudent
-      ? `Marksheet_2026_${selectedStudent.pen}`
-      : 'Marksheet_2026',
+      ? `Marksheet_${marksheetSession}_${selectedStudent.pen}`
+      : `Marksheet_${marksheetSession}`,
     pageStyle: `
       @page { size: A4 portrait; margin: 12mm; }
       @media print {
@@ -68,7 +80,7 @@ export default function ResultSearchClient() {
   const handlePrintBonafide = useReactToPrint({
     contentRef: bonafideRef,
     documentTitle: selectedStudent
-      ? `Bonafide_${selectedStudent.pen}`
+      ? `Bonafide_${currentSession}_${selectedStudent.pen}`
       : 'Bonafide_Certificate',
     pageStyle: `
       @page { size: A4 portrait; margin: 12mm; }
@@ -299,7 +311,8 @@ export default function ResultSearchClient() {
           {resultNotFound ? (
             <div className="rounded-2xl border border-rose-500/40 bg-rose-950/25 p-8 text-center">
               <p className="text-base font-bold text-rose-300">
-                No Result 2026 record found for {selectedStudent.name} (PEN: {selectedStudent.pen})
+                No Result {marksheetSession} record found for {selectedStudent.name} (PEN:{' '}
+                {selectedStudent.pen})
               </p>
               <p className="mt-1 text-xs text-slate-400">
                 Please contact Government Middle School Warpora office if marks have not been
@@ -347,7 +360,7 @@ export default function ResultSearchClient() {
                         <strong>PEN:</strong> {selectedStudent.pen}
                       </p>
                       <p>
-                        <strong>Session:</strong> 2026
+                        <strong>Session:</strong> {marksheetSession}
                       </p>
                     </div>
 
@@ -464,7 +477,7 @@ export default function ResultSearchClient() {
               {/* Ref No & Date Row */}
               <div className="mb-6 flex justify-between text-sm font-semibold text-black">
                 <p>
-                  <strong>Ref No:</strong> GMSW/BON/{new Date().getFullYear()}/
+                  <strong>Ref No:</strong> GMSW/BON/{currentSession}/
                   {selectedStudent.admission_number || '001'}
                 </p>
                 <p>
@@ -511,14 +524,14 @@ export default function ResultSearchClient() {
                   , {selectedStudent.gender === 'Female' ? 'daughter' : 'son'} of{' '}
                   <strong className="uppercase underline decoration-dotted">
                     {selectedStudent.father_name || '____________________'}
-                  </strong>{' '}
+                  </strong>
                   , resident of{' '}
                   <strong className="underline decoration-dotted">
                     {selectedStudent.adress || 'Warpora'}
                   </strong>
-                  , is a bonafide student of this institution currently studying in{' '}
-                  <strong>{formatClassLabel(selectedStudent.class)} {' '}</strong>
-                  and with Permanent
+                  , is a bonafide student of this institution for session {' '}
+                  <strong>{currentSession}</strong>, studying in{' '}
+                  <strong>{formatClassLabel(selectedStudent.class)}</strong> and with Permanent
                   Education Number (PEN) <strong>{selectedStudent.pen}</strong>.
                 </p>
 

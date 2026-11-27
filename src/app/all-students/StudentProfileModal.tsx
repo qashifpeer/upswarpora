@@ -13,6 +13,7 @@ import type { StudentRow } from './StudentsTable';
 
 interface StudentProfileModalProps {
   student: StudentRow | null;
+  currentSession?: string;
   onClose: () => void;
   onStudentUpdated: (updatedStudent: StudentRow) => void;
 }
@@ -45,6 +46,13 @@ const PREV_CLASS_LIST = [
   { label: 'Class 8', value: '8' },
 ];
 
+
+function getMarksheetSessionYear(currentSession?: string): string {
+  const match = currentSession?.match(/\d{4}/);
+  const baseYear = match ? parseInt(match[0], 10) : new Date().getFullYear();
+  return String(baseYear - 1);
+}
+
 function formatDisplayDate(isoDate?: string) {
   if (!isoDate) return 'N/A';
   const parts = isoDate.split('-');
@@ -67,6 +75,7 @@ function isClassSixOrHigher(studentClass?: string): boolean {
 
 export default function StudentProfileModal({
   student,
+  currentSession = '2026',
   onClose,
   onStudentUpdated,
 }: StudentProfileModalProps) {
@@ -106,9 +115,11 @@ export default function StudentProfileModal({
   const marksheetRef = useRef<HTMLDivElement>(null);
   const bonafideRef = useRef<HTMLDivElement>(null);
 
+  const marksheetSession = getMarksheetSessionYear(currentSession);
+
   const handlePrintMarksheet = useReactToPrint({
     contentRef: marksheetRef,
-    documentTitle: student ? `Marksheet_2026_${student.pen}` : 'Marksheet_2026',
+    documentTitle: student ? `Marksheet_${marksheetSession}_${student.pen}` : 'Marksheet',
     pageStyle: `
       @page { size: A4 portrait; margin: 12mm; }
       @media print {
@@ -116,6 +127,8 @@ export default function StudentProfileModal({
       }
     `,
   });
+
+ 
 
   const handlePrintBonafide = useReactToPrint({
     contentRef: bonafideRef,
@@ -173,7 +186,7 @@ export default function StudentProfileModal({
         if (!cancelled) setResultData(res);
       })
       .catch(() => {
-        if (!cancelled) setResultError('Failed to fetch 2026 result data.');
+        if (!cancelled) setResultError('Failed to fetch result data.');
       })
       .finally(() => {
         if (!cancelled) setResultLoading(false);
@@ -290,7 +303,7 @@ export default function StudentProfileModal({
                     : 'text-slate-400 hover:text-slate-200'
                 }`}
               >
-                Result 2026
+                Result {currentSession}
               </button>
               <button
                 type="button"
@@ -866,21 +879,21 @@ export default function StudentProfileModal({
             </div>
           )}
 
-          {/* TAB 2: RESULT 2026 MARKS SHEET */}
+          {/* TAB 2: RESULT MARKS SHEET */}
           {activeTab === 'result' && (
             <div>
               {resultLoading ? (
                 <div className="flex flex-col items-center justify-center gap-3 py-12">
                   <span className="h-8 w-8 animate-spin rounded-full border-2 border-fuchsia-500/30 border-t-fuchsia-400" />
                   <p className="text-xs font-bold uppercase tracking-wider text-fuchsia-300">
-                    Fetching 2026 Marks Sheet...
+                    Fetching {currentSession} Marks Sheet...
                   </p>
                 </div>
               ) : resultError ? (
                 <p className="py-10 text-center text-sm text-rose-300">{resultError}</p>
               ) : !resultData ? (
                 <p className="py-10 text-center text-sm text-slate-400">
-                  No Result 2026 record found for PEN {student.pen}.
+                  No Result record found for PEN {student.pen}.
                 </p>
               ) : (
                 <div className="mx-auto max-w-3xl space-y-4">
@@ -922,7 +935,7 @@ export default function StudentProfileModal({
                           <strong>PEN:</strong> {student.pen}
                         </p>
                         <p>
-                          <strong>Session:</strong> 2026
+                          <strong>Session:</strong> {marksheetSession}
                         </p>
                       </div>
 
@@ -1036,7 +1049,7 @@ export default function StudentProfileModal({
 
                   <div className="mb-6 flex justify-between text-sm font-semibold text-black">
                     <p>
-                      <strong>Ref No:</strong> GMSW/BON/{new Date().getFullYear()}/
+                      <strong>Ref No:</strong> GMSW/BON/{currentSession}/
                       {student.admission_number || '001'}
                     </p>
                     <p>
@@ -1090,7 +1103,8 @@ export default function StudentProfileModal({
                       <strong className="underline decoration-dotted">
                         {student.adress || 'Warpora'}
                       </strong>
-                      , is a bonafide student of this institution currently studying in{' '}
+                      , is a bonafide student of this institution for session {' '}
+                      <strong>{currentSession}</strong>, studying in{' '}
                       <strong>{formatClassLabel(student.class)}</strong> under Admission Number{' '}
                       <strong>{student.admission_number || 'N/A'}</strong> (dated{' '}
                       <strong>{formatDisplayDate(student.admission_date)}</strong>) and Permanent

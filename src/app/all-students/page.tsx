@@ -37,13 +37,25 @@ async function getAllStudents(): Promise<StudentRow[]> {
   return sanityClient.fetch<StudentRow[]>(query, {}, { cache: 'no-store' });
 }
 
+async function getCurrentSession(): Promise<string> {
+  const session = await sanityClient.fetch<{ sessionYear?: string } | null>(
+    `*[_type == "currentSession"] | order(_updatedAt desc)[0]{ sessionYear }`,
+    {},
+    { cache: 'no-store' }
+  );
+  return session?.sessionYear?.trim() || '2026';
+}
+
 export default async function AllStudentsPage() {
   const authed = await isAuthenticated();
   if (!authed) {
     redirect('/login?callbackUrl=/all-students');
   }
 
-  const students = await getAllStudents();
+  const [students, currentSession] = await Promise.all([
+    getAllStudents(),
+    getCurrentSession(),
+  ]);
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 selection:bg-cyan-400 selection:text-slate-950">
@@ -56,7 +68,7 @@ export default async function AllStudentsPage() {
         <div className="mb-8 flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
           <div>
             <span className="inline-block rounded-full border border-cyan-400/40 bg-cyan-950/50 px-3 py-1 text-[11px] font-bold uppercase tracking-widest text-cyan-300 shadow-[0_0_12px_rgba(34,211,238,0.25)]">
-              Authenticated Staff View — Click PEN or Name for Profile
+              Session {currentSession} • Click PEN or Name for Profile
             </span>
             <h1 className="mt-2 bg-gradient-to-r from-cyan-300 via-sky-200 to-fuchsia-400 bg-clip-text text-3xl font-extrabold tracking-tight text-transparent">
               GMS Warpora — All Students
@@ -73,7 +85,7 @@ export default async function AllStudentsPage() {
           </form>
         </div>
 
-        <StudentsTable initialStudents={students} />
+        <StudentsTable initialStudents={students} currentSession={currentSession} />
       </main>
     </div>
   );

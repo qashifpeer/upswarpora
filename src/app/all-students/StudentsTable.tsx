@@ -2,13 +2,13 @@
 
 import { useState, useMemo, useTransition } from 'react';
 import {
-  deleteStudent,
   promoteStudent,
   retainStudent,
-  resetAllPromotions,
   updateStudentStatus,
-  type PromotionActionState,
+  resetAllPromotions,
+  deleteStudent,
   type StudentStatus,
+  type PromotionActionState,
 } from './actions';
 import StudentProfileModal from './StudentProfileModal';
 
@@ -38,7 +38,20 @@ export interface StudentRow {
   remarks?: string;
 }
 
-const CLASS_OPTIONS = [
+const CLASS_ORDER: Record<string, number> = {
+  'Pre-Primary': 0,
+  '1': 1,
+  '2': 2,
+  '3': 3,
+  '4': 4,
+  '5': 5,
+  '6': 6,
+  '7': 7,
+  '8': 8,
+  Pool: 9,
+};
+
+const CLASS_FILTER_OPTIONS = [
   { label: 'All Classes', value: 'ALL' },
   { label: 'Pre-Primary', value: 'Pre-Primary' },
   { label: 'Class 1', value: '1' },
@@ -59,295 +72,281 @@ const STATUS_OPTIONS: { label: string; value: StudentStatus }[] = [
   { label: 'Left without DC', value: 'left without DC' },
 ];
 
-function getNeonStatusStyle(status: StudentStatus) {
-  switch (status) {
-    case 'active':
-      return 'bg-emerald-950/70 text-emerald-300 border-emerald-400/70 shadow-[0_0_12px_rgba(52,211,153,0.28)] focus:ring-emerald-400';
-    case 'struck off':
-      return 'bg-rose-950/70 text-rose-300 border-rose-500/70 shadow-[0_0_12px_rgba(244,63,94,0.28)] focus:ring-rose-500';
-    case 'left with DC':
-      return 'bg-amber-950/70 text-amber-300 border-amber-400/70 shadow-[0_0_12px_rgba(251,191,36,0.28)] focus:ring-amber-400';
-    case 'left without DC':
-      return 'bg-fuchsia-950/70 text-fuchsia-300 border-fuchsia-500/70 shadow-[0_0_12px_rgba(217,70,239,0.28)] focus:ring-fuchsia-500';
-  }
+const STATUS_FILTER_OPTIONS: { label: string; value: 'ALL' | StudentStatus }[] = [
+  { label: 'All Statuses', value: 'ALL' },
+  ...STATUS_OPTIONS,
+];
+
+function getNextClassPreview(currentClass: string): string {
+  const normalized = currentClass.trim();
+  if (normalized === 'Pre-Primary') return '1';
+  if (normalized === '8') return 'Pool';
+  if (normalized === 'Pool') return 'Pool';
+  const num = parseInt(normalized, 10);
+  if (!isNaN(num) && num >= 1 && num <= 7) return String(num + 1);
+  return normalized;
 }
 
 function formatClassBadge(cls: string) {
   if (cls === 'Pre-Primary') return 'Pre-Primary';
-  if (cls === 'Pool') return 'Pool';
+  if (cls === 'Pool') return 'Pool (8th Passed)';
   return `Class ${cls}`;
 }
 
-function getFirstName(fullName: string) {
-  return fullName.trim().split(/\s+/)[0] || '';
-}
-
-export default function StudentsTable({ initialStudents }: { initialStudents: StudentRow[] }) {
+export default function StudentsTable({
+  initialStudents,
+  currentSession = '2026',
+}: {
+  initialStudents: StudentRow[];
+  currentSession?: string;
+}) {
   const [students, setStudents] = useState<StudentRow[]>(initialStudents);
   const [selectedClass, setSelectedClass] = useState<string>('ALL');
-  const [selectedStatus, setSelectedStatus] = useState<string>('ALL');
+  const [selectedStatus, setSelectedStatus] = useState<'ALL' | StudentStatus>('ALL');
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [pendingId, setPendingId] = useState<string | null>(null);
+  const [isResettingAll, setIsResettingAll] = useState(false);
+
+  // Active Student Modal State
   const [activeStudent, setActiveStudent] = useState<StudentRow | null>(null);
 
-  const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
-  const [isResettingPromotions, setIsResettingPromotions] = useState(false);
-  const [updatingId, setUpdatingId] = useState<string | null>(null);
-
-  // Delete confirmation modal state
-  const [studentToDelete, setStudentToDelete] = useState<StudentRow | null>(null);
+  // Delete Confirmation Modal State
+  const [deleteTarget, setDeleteTarget] = useState<StudentRow | null>(null);
   const [deleteConfirmInput, setDeleteConfirmInput] = useState<string>('');
-  const [isDeleting, setIsDeleting] = useState<boolean>(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
-  const [isPending, startTransition] = useTransition();
+  const [, startTransition] = useTransition();
 
   const showToast = (type: 'success' | 'error', message: string) => {
     setToast({ type, message });
     setTimeout(() => {
       setToast((current) => (current?.message === message ? null : current));
-    }, 3000);
+    }, 3200);
   };
 
   const filteredStudents = useMemo(() => {
-    return students.filter((student) => {
-      const currentStatus = student.status || 'active';
-      const matchesClass = selectedClass === 'ALL' || student.class === selectedClass;
-      const matchesStatus = selectedStatus === 'ALL' || currentStatus === selectedStatus;
-      return matchesClass && matchesStatus;
-    });
-  }, [students, selectedClass, selectedStatus]);
+    const q = searchQuery.trim().toLowerCase();
 
-  const handleStatusChange = (studentId: string, newStatus: StudentStatus) => {
-    const previousStudents = [...students];
+    return [...students]
+      .filter((s) => {
+        const matchesClass = selectedClass === 'ALL' || s.class === selectedClass;
+        const currentStatus = s.status || 'active';
+        const matchesStatus = selectedStatus === 'ALL' || currentStatus === selectedStatus;
+        const matchesSearch =
+          !q ||
+          s.name?.toLowerCase().includes(q) ||
+          s.pen?.toLowerCase().includes(q) ||
+          s.father_name?.toLowerCase().includes(q);
 
-    setStudents((prev) =>
-      prev.map((s) => (s._id === studentId ? { ...s, status: newStatus } : s))
-    );
-    setUpdatingId(studentId);
-    setToast(null);
+        return matchesClass && matchesStatus && matchesSearch;
+      })
+      .sort((a, b) => {
+        const orderA = CLASS_ORDER[a.class] ?? 99;
+        const orderB = CLASS_ORDER[b.class] ?? 99;
+        if (orderA !== orderB) return orderA - orderB;
+        return (a.name || '').localeCompare(b.name || '');
+      });
+  }, [students, selectedClass, selectedStatus, searchQuery]);
 
-    startTransition(async () => {
-      try {
-        await updateStudentStatus(studentId, newStatus);
-        showToast('success', `Status updated → ${newStatus.toUpperCase()}`);
-      } catch {
-        setStudents(previousStudents);
-        showToast('error', 'Sync failed. Reverted status.');
-      } finally {
-        setUpdatingId(null);
-      }
-    });
-  };
-
-  const handlePromoteStudent = (student: StudentRow) => {
-    const state = student.promotionStatus || 'none';
-    if (state !== 'none' || student.class === 'Pool') return;
-
-    setActionLoadingId(student._id);
-    setToast(null);
+  const handlePromote = (student: StudentRow) => {
+    const nextClass = getNextClassPreview(student.class);
+    setPendingId(student._id);
 
     startTransition(async () => {
       try {
-        const res = await promoteStudent(student._id, student.class);
-
+        await promoteStudent(student._id, student.class);
         setStudents((prev) =>
-          prev.map((s) =>
-            s._id === student._id
+          prev.map((item) =>
+            item._id === student._id
               ? {
-                  ...s,
-                  class: res.class,
-                  prev_class: res.prev_class,
+                  ...item,
+                  prev_class: student.class,
+                  class: nextClass,
                   promotionStatus: 'promoted',
                 }
-              : s
+              : item
           )
         );
-
-        const targetLabel =
-          res.class === 'Pool' ? 'Pool (8th Passed)' : `Class ${res.class}`;
-        showToast('success', `${student.name} promoted → ${targetLabel}`);
+        showToast(
+          'success',
+          nextClass === 'Pool'
+            ? `${student.name} moved to Pool (8th Passed)`
+            : `${student.name} promoted to Class ${nextClass}`
+        );
       } catch (err: any) {
-        showToast('error', err?.message || 'Promotion failed.');
+        showToast('error', err?.message || 'Promotion failed. Please try again.');
       } finally {
-        setActionLoadingId(null);
+        setPendingId(null);
       }
     });
   };
 
-  const handleRetainStudent = (student: StudentRow) => {
-    const state = student.promotionStatus || 'none';
-    if (state !== 'none' || student.class === 'Pool') return;
-
-    setActionLoadingId(student._id);
-    setToast(null);
+  const handleRetain = (student: StudentRow) => {
+    setPendingId(student._id);
 
     startTransition(async () => {
       try {
-        const res = await retainStudent(student._id, student.class);
-
+        await retainStudent(student._id, student.class);
         setStudents((prev) =>
-          prev.map((s) =>
-            s._id === student._id
-              ? {
-                  ...s,
-                  class: res.class,
-                  prev_class: res.prev_class,
-                  promotionStatus: 'retained',
-                }
-              : s
+          prev.map((item) =>
+            item._id === student._id
+              ? { ...item, prev_class: student.class, promotionStatus: 'retained' }
+              : item
           )
         );
-
-        showToast(
-          'success',
-          `${student.name} retained in ${formatClassBadge(res.class)}`
-        );
+        showToast('success', `${student.name} retained in ${formatClassBadge(student.class)}`);
       } catch (err: any) {
-        showToast('error', err?.message || 'Retain action failed.');
+        showToast('error', err?.message || 'Retain action failed. Please try again.');
       } finally {
-        setActionLoadingId(null);
+        setPendingId(null);
       }
     });
   };
 
-  const handleStartPromotion = () => {
-    setIsResettingPromotions(true);
-    setToast(null);
+  const handleStatusChange = (student: StudentRow, newStatus: StudentStatus) => {
+    const previousStatus = student.status || 'active';
+    if (previousStatus === newStatus) return;
+
+    setPendingId(student._id);
+
+    startTransition(async () => {
+      try {
+        await updateStudentStatus(student._id, newStatus);
+        setStudents((prev) =>
+          prev.map((item) =>
+            item._id === student._id ? { ...item, status: newStatus } : item
+          )
+        );
+        showToast('success', `${student.name} marked as ${newStatus}`);
+      } catch (err: any) {
+        showToast('error', err?.message || 'Status update failed.');
+      } finally {
+        setPendingId(null);
+      }
+    });
+  };
+
+  const handleStartPromotionReset = () => {
+    setIsResettingAll(true);
 
     startTransition(async () => {
       try {
         const res = await resetAllPromotions();
-        setStudents((prev) => prev.map((s) => ({ ...s, promotionStatus: 'none' })));
+        setStudents((prev) =>
+          prev.map((item) => ({ ...item, promotionStatus: 'none' }))
+        );
         showToast(
           'success',
           res.resetCount > 0
-            ? `Unfroze ${res.resetCount} student(s) — Promote & Retain unlocked.`
-            : 'All Promote & Retain options are unlocked and ready.'
+            ? `Unlocked ${res.resetCount} student(s) for new promotion session`
+            : 'All students are already unlocked for promotion'
         );
       } catch (err: any) {
-        showToast('error', err?.message || 'Failed to reset promotion flags.');
+        showToast('error', err?.message || 'Failed to unlock promotion buttons.');
       } finally {
-        setIsResettingPromotions(false);
+        setIsResettingAll(false);
       }
     });
   };
 
-  const openDeletePrompt = (student: StudentRow) => {
-    setStudentToDelete(student);
+  const openDeleteModal = (student: StudentRow) => {
+    setDeleteTarget(student);
     setDeleteConfirmInput('');
+    setDeleteError(null);
   };
 
-  const closeDeletePrompt = () => {
+  const closeDeleteModal = () => {
     if (isDeleting) return;
-    setStudentToDelete(null);
+    setDeleteTarget(null);
     setDeleteConfirmInput('');
+    setDeleteError(null);
   };
 
-  const expectedDeletePhrase = studentToDelete
-    ? `delete ${getFirstName(studentToDelete.name).toLowerCase()}`
+  const expectedDeletePhrase = deleteTarget
+    ? `delete ${deleteTarget.name.trim().split(/\s+/)[0].toLowerCase()}`
     : '';
 
-  const isDeleteMatch =
-    Boolean(studentToDelete) &&
+  const isDeleteConfirmed =
+    Boolean(deleteTarget) &&
     deleteConfirmInput.trim().toLowerCase() === expectedDeletePhrase;
 
   const handleConfirmDelete = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!studentToDelete || !isDeleteMatch) return;
+    if (!deleteTarget || !isDeleteConfirmed) return;
 
-    const target = studentToDelete;
     setIsDeleting(true);
-    setToast(null);
+    setDeleteError(null);
 
     startTransition(async () => {
       try {
-        await deleteStudent(target._id, deleteConfirmInput);
-        setStudents((prev) => prev.filter((s) => s._id !== target._id));
-        if (activeStudent?._id === target._id) {
+        await deleteStudent(deleteTarget._id, deleteConfirmInput);
+        const deletedName = deleteTarget.name;
+        setStudents((prev) => prev.filter((item) => item._id !== deleteTarget._id));
+        if (activeStudent?._id === deleteTarget._id) {
           setActiveStudent(null);
         }
-        setStudentToDelete(null);
+        setDeleteTarget(null);
         setDeleteConfirmInput('');
-        showToast('success', `Deleted student "${target.name}" (PEN: ${target.pen})`);
+        showToast('success', `Deleted student record: ${deletedName}`);
       } catch (err: any) {
-        showToast('error', err?.message || 'Failed to delete student.');
+        setDeleteError(err?.message || 'Failed to delete student.');
       } finally {
         setIsDeleting(false);
       }
     });
   };
 
-  const frozenCount = useMemo(
-    () =>
-      students.filter(
-        (s) => s.promotionStatus === 'promoted' || s.promotionStatus === 'retained'
-      ).length,
-    [students]
-  );
-
   return (
     <div className="space-y-6">
-      {/* Profile Modal */}
+      {/* Student Profile / Edit / Result / Bonafide Modal */}
       <StudentProfileModal
         student={activeStudent}
+        currentSession={currentSession}
         onClose={() => setActiveStudent(null)}
         onStudentUpdated={(updatedStudent) => {
           setStudents((prev) =>
-            prev.map((s) => (s._id === updatedStudent._id ? updatedStudent : s))
+            prev.map((item) => (item._id === updatedStudent._id ? updatedStudent : item))
           );
           setActiveStudent(updatedStudent);
-          showToast('success', `Updated details for ${updatedStudent.name}`);
+          showToast('success', `Updated profile for ${updatedStudent.name}`);
         }}
       />
 
-      {/* Delete Student Confirmation Modal */}
-      {studentToDelete && (
+      {/* Delete Confirmation Modal */}
+      {deleteTarget && (
         <div
           role="dialog"
           aria-modal="true"
-          aria-labelledby="delete-student-title"
+          aria-labelledby="delete-modal-title"
           className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-md"
         >
           <div className="w-full max-w-md rounded-2xl border border-rose-500/60 bg-slate-900 p-6 shadow-[0_0_40px_rgba(244,63,94,0.3)]">
-            <div className="flex items-start justify-between gap-3 border-b border-slate-800 pb-4">
-              <div>
-                <span className="inline-block rounded-full border border-rose-500/50 bg-rose-950/70 px-2.5 py-0.5 font-mono text-[10px] font-bold uppercase tracking-widest text-rose-300">
-                  Permanent Deletion
-                </span>
-                <h2
-                  id="delete-student-title"
-                  className="mt-1.5 text-lg font-extrabold text-slate-100"
-                >
-                  Delete {studentToDelete.name}?
-                </h2>
-              </div>
-
-              <button
-                type="button"
-                onClick={closeDeletePrompt}
-                disabled={isDeleting}
-                aria-label="Close delete confirmation"
-                className="cursor-pointer rounded-lg border border-slate-700 bg-slate-950 p-1.5 text-slate-400 transition hover:border-rose-400 hover:text-rose-300"
-              >
-                <svg
-                  className="h-4 w-4"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.2"
-                >
-                  <line x1="18" y1="6" x2="6" y2="18" />
-                  <line x1="6" y1="6" x2="18" y2="18" />
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-rose-500/50 bg-rose-950/70 text-rose-400">
+                <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                  <polyline points="3 6 5 6 21 6" />
+                  <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                  <path d="M10 11v6" />
+                  <path d="M14 11v6" />
+                  <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
                 </svg>
-              </button>
+              </div>
+              <div>
+                <h2 id="delete-modal-title" className="text-lg font-extrabold text-slate-100">
+                  Delete Student Record
+                </h2>
+                <p className="font-mono text-xs text-rose-300">PEN: {deleteTarget.pen}</p>
+              </div>
             </div>
 
-            <form onSubmit={handleConfirmDelete} className="mt-4 space-y-4">
-              <p className="text-xs leading-relaxed text-slate-300">
+            <form onSubmit={handleConfirmDelete} className="mt-5 space-y-4">
+              <p className="text-sm leading-relaxed text-slate-300">
                 This will permanently remove{' '}
-                <strong className="text-slate-100">{studentToDelete.name}</strong> (PEN:{' '}
-                <span className="font-mono text-cyan-300">{studentToDelete.pen}</span>) from{' '}
-                <code className="text-fuchsia-300">masterData</code>. To confirm, type{' '}
-                <span className="rounded border border-rose-500/50 bg-rose-950/70 px-2 py-0.5 font-mono font-bold text-rose-200">
+                <strong className="text-slate-100">{deleteTarget.name}</strong> from Sanity{' '}
+                <code className="text-cyan-300">masterData</code>. To confirm, type{' '}
+                <span className="rounded border border-rose-500/40 bg-rose-950/60 px-2 py-0.5 font-mono text-xs font-bold text-rose-200">
                   {expectedDeletePhrase}
                 </span>{' '}
                 below:
@@ -362,29 +361,27 @@ export default function StudentsTable({ initialStudents }: { initialStudents: St
                 className="w-full rounded-xl border border-rose-500/50 bg-slate-950 px-3.5 py-2.5 font-mono text-sm text-slate-100 placeholder-slate-600 outline-none transition focus:border-rose-400 focus:ring-2 focus:ring-rose-500/40"
               />
 
+              {deleteError && (
+                <p className="rounded-lg border border-rose-500/50 bg-rose-950/60 px-3 py-2 text-xs text-rose-200">
+                  {deleteError}
+                </p>
+              )}
+
               <div className="flex items-center justify-end gap-3 pt-2">
                 <button
                   type="button"
-                  onClick={closeDeletePrompt}
                   disabled={isDeleting}
-                  className="cursor-pointer rounded-xl border border-slate-700 bg-slate-950 px-4 py-2 text-xs font-bold uppercase tracking-wider text-slate-300 transition hover:border-slate-500 hover:text-white"
+                  onClick={closeDeleteModal}
+                  className="cursor-pointer rounded-xl border border-slate-700 bg-slate-950 px-4 py-2 text-xs font-bold uppercase tracking-wider text-slate-300 transition hover:border-slate-500 hover:text-white disabled:opacity-50"
                 >
                   Cancel
                 </button>
-
                 <button
                   type="submit"
-                  disabled={!isDeleteMatch || isDeleting}
-                  className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-rose-500/80 bg-rose-950/80 px-4 py-2 text-xs font-extrabold uppercase tracking-wider text-rose-200 shadow-[0_0_18px_rgba(244,63,94,0.35)] transition hover:bg-rose-900 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
+                  disabled={!isDeleteConfirmed || isDeleting}
+                  className="cursor-pointer rounded-xl border border-rose-500/80 bg-rose-950/80 px-4 py-2 text-xs font-bold uppercase tracking-wider text-rose-200 shadow-[0_0_20px_rgba(244,63,94,0.35)] transition hover:bg-rose-900 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
                 >
-                  {isDeleting ? (
-                    <>
-                      <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-rose-400/30 border-t-rose-200" />
-                      <span>Deleting...</span>
-                    </>
-                  ) : (
-                    <span>Confirm Delete</span>
-                  )}
+                  {isDeleting ? 'Deleting...' : 'Confirm Delete'}
                 </button>
               </div>
             </form>
@@ -396,7 +393,7 @@ export default function StudentsTable({ initialStudents }: { initialStudents: St
       {toast && (
         <div
           role="status"
-          className={`fixed bottom-5 right-5 z-[60] flex items-center gap-2.5 rounded-xl border px-4 py-3 text-sm font-semibold backdrop-blur-md transition-all ${
+          className={`fixed bottom-5 right-5 z-50 flex items-center gap-2.5 rounded-xl border px-4 py-3 text-sm font-semibold backdrop-blur-md transition-all ${
             toast.type === 'success'
               ? 'border-cyan-400/80 bg-slate-950/95 text-cyan-300 shadow-[0_0_25px_rgba(34,211,238,0.55)]'
               : 'border-rose-500/80 bg-slate-950/95 text-rose-300 shadow-[0_0_25px_rgba(244,63,94,0.55)]'
@@ -413,49 +410,67 @@ export default function StudentsTable({ initialStudents }: { initialStudents: St
         </div>
       )}
 
-      {/* Top Filter & Promotion Control Bar */}
-      <div className="flex flex-col justify-between gap-4 rounded-2xl border border-cyan-500/30 bg-slate-900/80 p-4 shadow-[0_0_25px_rgba(6,182,212,0.12)] backdrop-blur-md lg:flex-row lg:items-end">
-        <div className="flex flex-wrap items-center gap-4">
+      {/* Control Bar: Search + Class & Status Filters + Start Promotion + Counter */}
+      <div className="flex flex-col justify-between gap-4 rounded-2xl border border-cyan-500/30 bg-slate-900/80 p-4 shadow-[0_0_25px_rgba(6,182,212,0.12)] backdrop-blur-md xl:flex-row xl:items-center">
+        <div className="flex flex-wrap items-center gap-3">
+          {/* Search Input */}
+          <div className="relative min-w-[220px] flex-1 sm:flex-initial">
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search name, PEN, father..."
+              className="w-full rounded-xl border border-cyan-500/40 bg-slate-950 py-2 pl-9 pr-3.5 text-sm text-slate-100 placeholder-slate-500 outline-none transition focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/40"
+            />
+            <svg
+              className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-cyan-400/70"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.2"
+            >
+              <circle cx="11" cy="11" r="8" />
+              <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+          </div>
+
           {/* Class Filter */}
-          <div className="flex flex-col gap-1.5">
+          <div className="flex items-center gap-2">
             <label
               htmlFor="class-filter"
               className="text-xs font-bold uppercase tracking-wider text-cyan-400"
             >
-              Filter by Class
+              Class:
             </label>
             <select
               id="class-filter"
               value={selectedClass}
               onChange={(e) => setSelectedClass(e.target.value)}
-              className="min-w-[170px] cursor-pointer rounded-xl border border-cyan-500/40 bg-slate-950 px-3.5 py-2 text-sm font-medium text-cyan-100 shadow-[0_0_12px_rgba(34,211,238,0.15)] outline-none transition focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/50"
+              className="min-w-[155px] cursor-pointer rounded-xl border border-cyan-500/40 bg-slate-950 px-3.5 py-2 text-sm font-medium text-cyan-100 shadow-[0_0_15px_rgba(34,211,238,0.15)] outline-none transition focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/50"
             >
-              {CLASS_OPTIONS.map((cls) => (
-                <option key={cls.value} value={cls.value} className="bg-slate-950 text-cyan-100">
-                  {cls.label}
+              {CLASS_FILTER_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value} className="bg-slate-950 text-cyan-100">
+                  {opt.label}
                 </option>
               ))}
             </select>
           </div>
 
           {/* Status Filter */}
-          <div className="flex flex-col gap-1.5">
+          <div className="flex items-center gap-2">
             <label
               htmlFor="status-filter"
               className="text-xs font-bold uppercase tracking-wider text-fuchsia-400"
             >
-              Filter by Status
+              Status:
             </label>
             <select
               id="status-filter"
               value={selectedStatus}
-              onChange={(e) => setSelectedStatus(e.target.value)}
-              className="min-w-[190px] cursor-pointer rounded-xl border border-fuchsia-500/40 bg-slate-950 px-3.5 py-2 text-sm font-medium text-fuchsia-100 shadow-[0_0_12px_rgba(217,70,239,0.15)] outline-none transition focus:border-fuchsia-400 focus:ring-2 focus:ring-fuchsia-400/50"
+              onChange={(e) => setSelectedStatus(e.target.value as 'ALL' | StudentStatus)}
+              className="min-w-[165px] cursor-pointer rounded-xl border border-fuchsia-500/40 bg-slate-950 px-3.5 py-2 text-sm font-medium text-fuchsia-100 shadow-[0_0_15px_rgba(217,70,239,0.15)] outline-none transition focus:border-fuchsia-400 focus:ring-2 focus:ring-fuchsia-400/50"
             >
-              <option value="ALL" className="bg-slate-950 text-fuchsia-100">
-                All Statuses
-              </option>
-              {STATUS_OPTIONS.map((opt) => (
+              {STATUS_FILTER_OPTIONS.map((opt) => (
                 <option key={opt.value} value={opt.value} className="bg-slate-950 text-fuchsia-100">
                   {opt.label}
                 </option>
@@ -463,253 +478,216 @@ export default function StudentsTable({ initialStudents }: { initialStudents: St
             </select>
           </div>
 
-          {(selectedClass !== 'ALL' || selectedStatus !== 'ALL') && (
+          {(selectedClass !== 'ALL' || selectedStatus !== 'ALL' || searchQuery !== '') && (
             <button
               type="button"
               onClick={() => {
                 setSelectedClass('ALL');
                 setSelectedStatus('ALL');
+                setSearchQuery('');
               }}
-              className="mt-5 cursor-pointer rounded-xl border border-slate-700 bg-slate-950/80 px-3.5 py-2 text-xs font-semibold text-slate-300 transition hover:border-cyan-400 hover:text-cyan-300 hover:shadow-[0_0_12px_rgba(34,211,238,0.3)]"
+              className="cursor-pointer rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-xs font-semibold text-slate-300 transition hover:border-cyan-400 hover:text-cyan-300"
             >
               Reset Filters
             </button>
           )}
         </div>
 
-        {/* Right Side: Start Promotion Button + Count Pill */}
         <div className="flex flex-wrap items-center gap-3">
+          {/* Start Promotion Session Reset Button */}
           <button
             type="button"
-            disabled={isResettingPromotions}
-            onClick={handleStartPromotion}
-            title="Unfreeze all Promoted / Retained rows"
-            className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-amber-400/75 bg-amber-950/60 px-4 py-2 text-xs font-extrabold uppercase tracking-wider text-amber-200 shadow-[0_0_18px_rgba(251,191,36,0.28)] transition hover:bg-amber-900/80 hover:text-white hover:shadow-[0_0_24px_rgba(251,191,36,0.5)] disabled:cursor-wait disabled:opacity-60"
+            disabled={isResettingAll}
+            onClick={handleStartPromotionReset}
+            title="Unlock all Promoted / Retained buttons for a new academic session"
+            className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-amber-400/80 bg-amber-950/60 px-4 py-2 text-xs font-extrabold uppercase tracking-wider text-amber-200 shadow-[0_0_18px_rgba(251,191,36,0.3)] transition hover:bg-amber-900/80 hover:text-white hover:shadow-[0_0_25px_rgba(251,191,36,0.55)] disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {isResettingPromotions ? (
-              <span className="h-4 w-4 animate-spin rounded-full border-2 border-amber-400/30 border-t-amber-300" />
+            {isResettingAll ? (
+              <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-amber-400/30 border-t-amber-300" />
             ) : (
-              <svg
-                className="h-4 w-4"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.2"
-              >
-                <polyline points="23 4 23 10 17 10" />
-                <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
+              <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4">
+                <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+                <path d="M3 3v5h5" />
               </svg>
             )}
-            <span>
-              Start Promotion{frozenCount > 0 ? ` (${frozenCount} Frozen)` : ''}
-            </span>
+            <span>Start Promotion</span>
           </button>
 
-          <div className="rounded-xl border border-cyan-400/30 bg-slate-950/90 px-4 py-2 text-xs font-semibold text-slate-300 shadow-[0_0_15px_rgba(34,211,238,0.12)]">
-            Showing{' '}
+          {/* Student Counter */}
+          <div className="flex items-center gap-2 rounded-xl border border-cyan-400/30 bg-slate-950/90 px-4 py-2 text-xs font-semibold text-slate-300 shadow-[0_0_15px_rgba(34,211,238,0.12)]">
+            <span>Showing</span>
             <span className="font-mono text-sm font-bold text-cyan-400">
               {filteredStudents.length}
-            </span>{' '}
-            of <span className="font-mono text-slate-200">{students.length}</span>
+            </span>
+            <span>of</span>
+            <span className="font-mono text-sm font-bold text-slate-200">{students.length}</span>
           </div>
         </div>
       </div>
 
-      {/* Neon Table */}
+      {/* Cyberpunk Neon Table */}
       <div className="overflow-x-auto rounded-2xl border border-cyan-500/30 bg-slate-900/75 shadow-[0_0_35px_rgba(34,211,238,0.12)] backdrop-blur-md">
         <table className="min-w-full divide-y divide-cyan-500/20 text-left text-sm">
           <thead className="bg-slate-950/90 text-xs font-bold uppercase tracking-wider text-cyan-400">
             <tr>
-              <th className="w-20 px-6 py-4">S.No</th>
-              <th className="px-6 py-4">PEN</th>
-              <th className="px-6 py-4">Student Name</th>
-              <th className="px-6 py-4">Class</th>
-              <th className="w-56 px-6 py-4">Promote / Retain</th>
-              <th className="w-60 px-6 py-4">Status</th>
-              <th className="w-20 px-4 py-4 text-center">Delete</th>
+              <th className="w-16 px-5 py-4">S.No</th>
+              <th className="px-5 py-4">PEN</th>
+              <th className="px-5 py-4">Student Name</th>
+              <th className="px-5 py-4">Class</th>
+              <th className="px-5 py-4">Status</th>
+              <th className="px-5 py-4 text-right">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-800/80">
             {filteredStudents.length === 0 ? (
               <tr>
-                <td colSpan={7} className="px-6 py-12 text-center text-slate-400">
-                  No students match the selected Class and Status filters.
+                <td colSpan={6} className="px-5 py-12 text-center text-slate-400">
+                  No students match the selected filters.
                 </td>
               </tr>
             ) : (
               filteredStudents.map((student, index) => {
-                const currentStatus: StudentStatus = student.status || 'active';
-                const promotionState: PromotionActionState =
-                  student.promotionStatus || 'none';
-                const isRowUpdating = updatingId === student._id && isPending;
-                const isRowActionLoading = actionLoadingId === student._id && isPending;
+                const isLoading = pendingId === student._id;
                 const isInPool = student.class === 'Pool';
+                const currentStatus = student.status || 'active';
+                const isInactive = currentStatus !== 'active';
+                const promoState = student.promotionStatus || 'none';
+                const isPromoted = promoState === 'promoted';
+                const isRetained = promoState === 'retained';
+                const isLockedByAction = isPromoted || isRetained;
 
                 return (
                   <tr
                     key={student._id}
-                    className="transition-colors duration-150 hover:bg-cyan-500/[0.06]"
+                    className={`transition-colors duration-150 ${
+                      isInactive
+                        ? 'bg-slate-950/50 opacity-75 hover:bg-rose-500/[0.04]'
+                        : 'hover:bg-cyan-500/[0.06]'
+                    }`}
                   >
-                    <td className="whitespace-nowrap px-6 py-3.5 font-mono text-xs font-semibold text-slate-400">
+                    {/* S.No */}
+                    <td className="whitespace-nowrap px-5 py-3.5 font-mono text-xs font-semibold text-slate-400">
                       {String(index + 1).padStart(2, '0')}
                     </td>
 
-                    {/* Clickable PEN */}
-                    <td className="whitespace-nowrap px-6 py-3.5">
+                    {/* Clickable PEN -> Opens Profile Modal */}
+                    <td className="whitespace-nowrap px-5 py-3.5 font-mono text-xs font-medium">
                       <button
                         type="button"
                         onClick={() => setActiveStudent(student)}
-                        title="Open Student Profile"
-                        className="cursor-pointer font-mono font-semibold text-cyan-300 underline decoration-cyan-500/40 underline-offset-4 transition hover:text-cyan-200 hover:drop-shadow-[0_0_8px_rgba(34,211,238,0.85)]"
+                        title="Click to view profile, result, or bonafide"
+                        className="cursor-pointer text-cyan-300 underline decoration-cyan-500/40 underline-offset-4 transition hover:text-cyan-200 hover:drop-shadow-[0_0_8px_rgba(34,211,238,0.85)]"
                       >
                         {student.pen}
                       </button>
                     </td>
 
-                    {/* Clickable Student Name */}
-                    <td className="whitespace-nowrap px-6 py-3.5">
+                    {/* Clickable Student Name -> Opens Profile Modal */}
+                    <td className="whitespace-nowrap px-5 py-3.5 font-semibold">
                       <button
                         type="button"
                         onClick={() => setActiveStudent(student)}
-                        title="Open Student Profile"
-                        className="cursor-pointer text-left font-semibold text-slate-100 transition hover:text-fuchsia-300 hover:underline hover:decoration-fuchsia-400/60 hover:underline-offset-4"
+                        title="Click to view profile, result, or bonafide"
+                        className="cursor-pointer text-left text-slate-100 underline decoration-slate-600 underline-offset-4 transition hover:text-cyan-300 hover:decoration-cyan-400"
                       >
                         {student.name}
                       </button>
                     </td>
 
-                    {/* Class Badge */}
-                    <td className="whitespace-nowrap px-6 py-3.5">
+                    {/* Current Class */}
+                    <td className="whitespace-nowrap px-5 py-3.5">
                       <span
                         className={`rounded-md border px-2.5 py-1 text-xs font-semibold ${
                           isInPool
-                            ? 'border-amber-400/50 bg-amber-950/50 text-amber-300'
-                            : 'border-fuchsia-500/30 bg-fuchsia-950/40 text-fuchsia-300'
+                            ? 'border-emerald-400/50 bg-emerald-950/60 text-emerald-300 shadow-[0_0_12px_rgba(52,211,153,0.2)]'
+                            : 'border-fuchsia-500/35 bg-fuchsia-950/40 text-fuchsia-300'
                         }`}
                       >
                         {formatClassBadge(student.class)}
                       </span>
                     </td>
 
-                    {/* Promote / Retain / Frozen State Column */}
-                    <td className="whitespace-nowrap px-6 py-3.5">
-                      {promotionState === 'promoted' ? (
-                        <button
-                          type="button"
-                          disabled
-                          title="Frozen as Promoted until Start Promotion is clicked"
-                          className="inline-flex w-full cursor-not-allowed items-center justify-center gap-1.5 rounded-xl border border-emerald-400/70 bg-emerald-950/70 px-3 py-1.5 text-xs font-extrabold uppercase tracking-wider text-emerald-300 opacity-90 shadow-[0_0_12px_rgba(52,211,153,0.28)]"
-                        >
-                          <svg
-                            className="h-3.5 w-3.5"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2.5"
-                          >
-                            <polyline points="20 6 9 17 4 12" />
-                          </svg>
-                          <span>Promoted</span>
-                        </button>
-                      ) : promotionState === 'retained' ? (
-                        <button
-                          type="button"
-                          disabled
-                          title="Frozen as Retained until Start Promotion is clicked"
-                          className="inline-flex w-full cursor-not-allowed items-center justify-center gap-1.5 rounded-xl border border-amber-400/70 bg-amber-950/70 px-3 py-1.5 text-xs font-extrabold uppercase tracking-wider text-amber-300 opacity-90 shadow-[0_0_12px_rgba(251,191,36,0.28)]"
-                        >
-                          <svg
-                            className="h-3.5 w-3.5"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2.5"
-                          >
-                            <rect x="6" y="4" width="4" height="16" />
-                            <rect x="14" y="4" width="4" height="16" />
-                          </svg>
-                          <span>Retained</span>
-                        </button>
-                      ) : isInPool ? (
-                        <span className="inline-flex w-full items-center justify-center rounded-xl border border-slate-700 bg-slate-950/70 px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-slate-400">
-                          In Pool
-                        </span>
-                      ) : (
-                        <div className="flex items-center gap-2">
-                          <button
-                            type="button"
-                            disabled={isRowActionLoading}
-                            onClick={() => handlePromoteStudent(student)}
-                            className="inline-flex flex-1 cursor-pointer items-center justify-center rounded-xl border border-cyan-400/70 bg-cyan-950/60 px-2.5 py-1.5 text-xs font-extrabold uppercase tracking-wider text-cyan-200 shadow-[0_0_12px_rgba(34,211,238,0.22)] transition hover:bg-cyan-900/80 hover:text-white hover:shadow-[0_0_18px_rgba(34,211,238,0.45)] disabled:cursor-wait disabled:opacity-60"
-                          >
-                            {isRowActionLoading ? '...' : 'Promote'}
-                          </button>
-                          <button
-                            type="button"
-                            disabled={isRowActionLoading}
-                            onClick={() => handleRetainStudent(student)}
-                            className="inline-flex flex-1 cursor-pointer items-center justify-center rounded-xl border border-amber-400/70 bg-amber-950/60 px-2.5 py-1.5 text-xs font-extrabold uppercase tracking-wider text-amber-200 shadow-[0_0_12px_rgba(251,191,36,0.22)] transition hover:bg-amber-900/80 hover:text-white hover:shadow-[0_0_18px_rgba(251,191,36,0.45)] disabled:cursor-wait disabled:opacity-60"
-                          >
-                            {isRowActionLoading ? '...' : 'Retain'}
-                          </button>
-                        </div>
-                      )}
-                    </td>
-
-                    {/* Status Dropdown */}
-                    <td className="whitespace-nowrap px-6 py-3.5">
-                      <div className="flex items-center gap-2.5">
-                        <select
-                          aria-label={`Status for ${student.name}`}
-                          value={currentStatus}
-                          disabled={isRowUpdating}
-                          onChange={(e) =>
-                            handleStatusChange(student._id, e.target.value as StudentStatus)
-                          }
-                          className={`w-full cursor-pointer rounded-xl border px-3 py-1.5 text-xs font-bold uppercase tracking-wide outline-none transition focus:ring-2 disabled:cursor-wait disabled:opacity-60 ${getNeonStatusStyle(
-                            currentStatus
-                          )}`}
-                        >
-                          {STATUS_OPTIONS.map((opt) => (
-                            <option
-                              key={opt.value}
-                              value={opt.value}
-                              className="bg-slate-950 text-slate-100"
-                            >
-                              {opt.label}
-                            </option>
-                          ))}
-                        </select>
-                        {isRowUpdating && (
-                          <span className="h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-cyan-500/30 border-t-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.8)]" />
-                        )}
-                      </div>
-                    </td>
-
-                    {/* Delete Icon Button */}
-                    <td className="whitespace-nowrap px-4 py-3.5 text-center">
-                      <button
-                        type="button"
-                        onClick={() => openDeletePrompt(student)}
-                        title={`Delete ${student.name}`}
-                        aria-label={`Delete ${student.name}`}
-                        className="inline-flex cursor-pointer items-center justify-center rounded-xl border border-rose-500/40 bg-rose-950/40 p-2 text-rose-300 shadow-[0_0_10px_rgba(244,63,94,0.18)] transition hover:border-rose-400 hover:bg-rose-900/70 hover:text-white hover:shadow-[0_0_16px_rgba(244,63,94,0.45)]"
+                    {/* Status Selector */}
+                    <td className="whitespace-nowrap px-5 py-3.5">
+                      <select
+                        aria-label={`Enrollment status for ${student.name}`}
+                        disabled={isLoading}
+                        value={currentStatus}
+                        onChange={(e) =>
+                          handleStatusChange(student, e.target.value as StudentStatus)
+                        }
+                        className={`cursor-pointer rounded-lg border px-2.5 py-1.5 text-xs font-bold tracking-wide outline-none transition disabled:cursor-not-allowed disabled:opacity-50 ${
+                          currentStatus === 'active'
+                            ? 'border-emerald-400/60 bg-emerald-950/50 text-emerald-300 focus:border-emerald-300'
+                            : 'border-rose-500/60 bg-rose-950/50 text-rose-300 focus:border-rose-400'
+                        }`}
                       >
-                        <svg
-                          className="h-4 w-4"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2.1"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
+                        {STATUS_OPTIONS.map((opt) => (
+                          <option
+                            key={opt.value}
+                            value={opt.value}
+                            className="bg-slate-950 text-slate-100"
+                          >
+                            {opt.label}
+                          </option>
+                        ))}
+                      </select>
+                    </td>
+
+                    {/* Actions: Promote + Retain + Delete */}
+                    <td className="whitespace-nowrap px-5 py-3.5 text-right">
+                      <div className="inline-flex items-center gap-2.5">
+                        <button
+                          type="button"
+                          disabled={isLoading || isInPool || isInactive || isLockedByAction}
+                          onClick={() => handlePromote(student)}
+                          className={`inline-flex items-center gap-1.5 rounded-lg border px-3.5 py-1.5 text-xs font-bold uppercase tracking-wider transition-all ${
+                            isPromoted
+                              ? 'cursor-not-allowed border-emerald-400/80 bg-emerald-950/80 text-emerald-300 shadow-[0_0_14px_rgba(52,211,153,0.4)]'
+                              : isInPool || isInactive || isRetained
+                              ? 'cursor-not-allowed border-slate-700 bg-slate-900 text-slate-600'
+                              : 'cursor-pointer border-cyan-400/75 bg-cyan-950/60 text-cyan-200 shadow-[0_0_14px_rgba(34,211,238,0.28)] hover:bg-cyan-900/80 hover:text-white hover:shadow-[0_0_22px_rgba(34,211,238,0.65)] disabled:opacity-50'
+                          }`}
                         >
-                          <polyline points="3 6 5 6 21 6" />
-                          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                          <line x1="10" y1="11" x2="10" y2="17" />
-                          <line x1="14" y1="11" x2="14" y2="17" />
-                        </svg>
-                      </button>
+                          {isLoading && (
+                            <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-cyan-400/30 border-t-cyan-300" />
+                          )}
+                          <span>
+                            {isPromoted ? 'Promoted' : isInPool ? 'In Pool' : 'Promote'}
+                          </span>
+                        </button>
+
+                        <button
+                          type="button"
+                          disabled={isLoading || isInactive || isLockedByAction}
+                          onClick={() => handleRetain(student)}
+                          className={`inline-flex items-center gap-1.5 rounded-lg border px-3.5 py-1.5 text-xs font-bold uppercase tracking-wider transition-all ${
+                            isRetained
+                              ? 'cursor-not-allowed border-amber-400/80 bg-amber-950/80 text-amber-300 shadow-[0_0_14px_rgba(251,191,36,0.4)]'
+                              : isInactive || isPromoted
+                              ? 'cursor-not-allowed border-slate-700 bg-slate-900 text-slate-600'
+                              : 'cursor-pointer border-fuchsia-400/75 bg-fuchsia-950/60 text-fuchsia-200 shadow-[0_0_14px_rgba(217,70,239,0.28)] hover:bg-fuchsia-900/80 hover:text-white hover:shadow-[0_0_22px_rgba(217,70,239,0.65)] disabled:opacity-50'
+                          }`}
+                        >
+                          {isRetained ? 'Retained' : 'Retain'}
+                        </button>
+
+                        <button
+                          type="button"
+                          disabled={isLoading}
+                          onClick={() => openDeleteModal(student)}
+                          title={`Delete ${student.name}`}
+                          aria-label={`Delete ${student.name}`}
+                          className="inline-flex cursor-pointer items-center justify-center rounded-lg border border-rose-500/60 bg-rose-950/50 p-1.5 text-rose-300 shadow-[0_0_12px_rgba(244,63,94,0.22)] transition hover:border-rose-400 hover:bg-rose-900/80 hover:text-white hover:shadow-[0_0_18px_rgba(244,63,94,0.55)] disabled:cursor-not-allowed disabled:opacity-40"
+                        >
+                          <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1">
+                            <polyline points="3 6 5 6 21 6" />
+                            <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                            <path d="M10 11v6" />
+                            <path d="M14 11v6" />
+                          </svg>
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 );

@@ -8,44 +8,49 @@ export interface PublicStudentMatch {
   name: string;
   father_name?: string;
   mother_name?: string;
-  gender?: string;
-  adress?:string;
   dob?: string;
-  status?: string;
-  class: string;
+  gender?: string;
+  class?: string;
   prev_class?: string;
+  adress?: string;
   admission_number?: string;
+  admission_date?: string;
+  status?: string;
 }
 
 export interface Result2026Data {
   _id: string;
-  pen: string;
-  name: string;
+  pen?: string;
   english?: number;
+  urdu?: number;
   math?: number;
   science?: number;
   sst?: number;
-  urdu?: number;
   kashmiri?: number;
   total?: number;
   percentage?: number;
 }
 
 export async function searchStudentsByName(
-  searchTerm: string
+  nameQuery: string
 ): Promise<PublicStudentMatch[]> {
-  const cleaned = searchTerm.trim();
+  const cleaned = nameQuery.trim();
   if (cleaned.length < 2) return [];
 
-  const query = `*[_type == "masterData" && name match $pattern] | order(class asc, name asc)[0...25]{
+  const query = `*[_type == "masterData" && name match $pattern] | order(name asc)[0...25]{
     _id,
     pen,
     name,
     father_name,
+    mother_name,
     dob,
+    gender,
     class,
     prev_class,
-    admission_number
+    adress,
+    admission_number,
+    admission_date,
+    "status": coalesce(status, "active")
   }`;
 
   return sanityClient.fetch<PublicStudentMatch[]>(
@@ -60,33 +65,51 @@ export async function getPublicStudentAndResultByPen(pen: string): Promise<{
   result: Result2026Data | null;
 }> {
   const cleanedPen = pen.trim();
-  if (!cleanedPen) return { student: null, result: null };
+  if (!cleanedPen) {
+    return { student: null, result: null };
+  }
 
-  const query = `{
-    "student": *[_type == "masterData" && pen == $pen][0]{
-      _id,
-      pen,
-      name,
-      father_name,
-      dob,
-      class,
-      prev_class,
-      admission_number
-    },
-    "result": *[_type == "result2026" && pen == $pen][0]{
-      _id,
-      pen,
-      name,
-      english,
-      math,
-      science,
-      sst,
-      urdu,
-      kashmiri,
-      total,
-      percentage
-    }
+  const studentQuery = `*[_type == "masterData" && pen == $pen][0]{
+    _id,
+    pen,
+    name,
+    father_name,
+    mother_name,
+    dob,
+    gender,
+    class,
+    prev_class,
+    adress,
+    admission_number,
+    admission_date,
+    "status": coalesce(status, "active")
   }`;
 
-  return sanityClient.fetch(query, { pen: cleanedPen }, { cache: 'no-store' });
+  const resultQuery = `*[_type in ["result", "result2026"] && pen == $pen][0]{
+    _id,
+    pen,
+    english,
+    urdu,
+    math,
+    science,
+    sst,
+    kashmiri,
+    total,
+    percentage
+  }`;
+
+  const [student, result] = await Promise.all([
+    sanityClient.fetch<PublicStudentMatch | null>(
+      studentQuery,
+      { pen: cleanedPen },
+      { cache: 'no-store' }
+    ),
+    sanityClient.fetch<Result2026Data | null>(
+      resultQuery,
+      { pen: cleanedPen },
+      { cache: 'no-store' }
+    ),
+  ]);
+
+  return { student, result };
 }

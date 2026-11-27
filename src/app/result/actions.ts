@@ -1,6 +1,6 @@
 'use server';
 
-import { sanityClient } from '@/lib/sanity';
+import { sanityReadClient } from '@/lib/sanity';
 
 export interface PublicStudentMatch {
   _id: string;
@@ -53,7 +53,7 @@ export async function searchStudentsByName(
     "status": coalesce(status, "active")
   }`;
 
-  return sanityClient.fetch<PublicStudentMatch[]>(
+  return sanityReadClient.fetch<PublicStudentMatch[]>(
     query,
     { pattern: `*${cleaned}*` },
     { cache: 'no-store' }
@@ -99,12 +99,12 @@ export async function getPublicStudentAndResultByPen(pen: string): Promise<{
   }`;
 
   const [student, result] = await Promise.all([
-    sanityClient.fetch<PublicStudentMatch | null>(
+    sanityReadClient.fetch<PublicStudentMatch | null>(
       studentQuery,
       { pen: cleanedPen },
       { cache: 'no-store' }
     ),
-    sanityClient.fetch<Result2026Data | null>(
+    sanityReadClient.fetch<Result2026Data | null>(
       resultQuery,
       { pen: cleanedPen },
       { cache: 'no-store' }

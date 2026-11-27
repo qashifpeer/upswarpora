@@ -1,13 +1,11 @@
 import { Suspense } from "react";
-import { redirect } from "next/navigation";
-import { isAuthenticated } from "@/lib/auth";
-import { sanityClient } from "@/lib/sanity";
+import { sanityReadClient } from "@/lib/sanity";
 import ResultSearchClient from "./ResultSearchClient";
 
 export const dynamic = "force-dynamic";
 
 async function getCurrentSession(): Promise<string> {
-  const session = await sanityClient.fetch<{ sessionYear?: string } | null>(
+  const session = await sanityReadClient.fetch<{ sessionYear?: string } | null>(
     `*[_type == "currentSession"] | order(_updatedAt desc)[0]{ sessionYear }`,
     {},
     { cache: "no-store" }
@@ -16,11 +14,6 @@ async function getCurrentSession(): Promise<string> {
 }
 
 export default async function ResultPage() {
-  const authed = await isAuthenticated();
-  if (!authed) {
-    redirect("/login?callbackUrl=/result");
-  }
-
   const currentSession = await getCurrentSession();
   const baseYearMatch = currentSession.match(/\d{4}/);
   const marksheetSession = String(

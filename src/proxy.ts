@@ -4,7 +4,6 @@ import { SESSION_COOKIE_NAME, verifySessionToken } from '@/lib/auth';
 
 const PROTECTED_PREFIXES = [
   '/all-students',
-  '/result',
   '/fetch-detail',
   '/add-student',
   '/statements',
@@ -38,7 +37,6 @@ export async function proxy(request: NextRequest) {
 export const config = {
   matcher: [
     '/all-students/:path*',
-    '/result/:path*',
     '/fetch-detail/:path*',
     '/add-student/:path*',
     '/statements/:path*',
